@@ -19,10 +19,17 @@ void setup() {
 	}
 
 	initializeIMU();					// Initialize and calibrate the IMU
+	timer = millis();
 
 }
 
 void loop() {
+
+	while(millis() - timer < IMUPollPeriodMSec)
+	{
+		// Do nothing
+	}
+	timer = millis();
 
 	updateIMUValues();
 	//printIMUValues();
@@ -31,6 +38,8 @@ void loop() {
 	updateControllerValues();
 	//printControllerValues();
 	//printMotorWriteValues();
+
+	controlFlight();
 
 	if(QUAD_ARMED)
 	{
@@ -42,6 +51,7 @@ void loop() {
 		stopMotors();
 		checkArmed();
 	}
+
 
 }
 
@@ -78,7 +88,7 @@ Delays 1 second in order to prevent disarming.
 */
 void checkArmed()
 {
-	if( (throValue < armed_throttle) && (ruddValue < armed_other) && (elevValue < armed_other) && (aileValue < armed_other))
+	if( (controllerThroValue < armed_throttle) && (controllerRuddValue < armed_other) && (controllerElevValue < armed_other) && (controllerAileValue < armed_other))
 	{
 		Serial.println(armed_other);
 		QUAD_ARMED = true;
@@ -95,7 +105,7 @@ Delays 1 second in order to prevent rearming.
 */
 void checkDisarmed()
 {
-	if( (throValue < armed_throttle) && (ruddValue < armed_other) && (elevValue < armed_other) && (aileValue < armed_other))
+	if( (controllerThroValue < armed_throttle) && (controllerRuddValue < armed_other) && (controllerElevValue < armed_other) && (controllerAileValue < armed_other))
 	{
 		QUAD_ARMED = false;
 		Serial.println("Disarmed.");
@@ -105,6 +115,7 @@ void checkDisarmed()
 
 void printVectorValues()
 {
+	/*
 	Serial.print("a/g:\t");
     Serial.print("x: "); Serial.print(current_acc_vector->x); Serial.print(" \t");
     Serial.print("y: "); Serial.print(current_acc_vector->y); Serial.print(" \t");
@@ -112,6 +123,7 @@ void printVectorValues()
     Serial.print("x: "); Serial.print(current_gyro_vector->x); Serial.print(" \t");
     Serial.print("y: "); Serial.print(current_gyro_vector->y); Serial.print("  \t");
     Serial.print("z: "); Serial.println(current_gyro_vector->z);
+    */
 }
 
 void writeMotors()
@@ -133,7 +145,7 @@ void initializeControllerInputPins()
 
 void printControllerValues()
 {
-	Serial.print("Throttle: "); Serial.print(throValue); Serial.print("\t");
+	Serial.print("Throttle: "); Serial.print(controllerThroValue); Serial.print("\t");
 	Serial.print("Rudder: "); Serial.print(ruddValue); Serial.println();
 	Serial.print("Aile: "); Serial.print(aileValue); Serial.print("\t");
 	Serial.print("Elev: "); Serial.print(elevValue); Serial.println(); Serial.println();
@@ -145,27 +157,22 @@ void updateControllerValues()
 	updateRudder();
 	updateElev();
 	updateAile();
+}
 
-	int controller_aile = aileValue;
-	int controller_elev = elevValue;
+void controlFlight()
+{
+	stabilize();
 
-	// If not touching controls, stabilize
-	if(abs(controller_aile) < 2)
-	{
-		stabilizeRoll();
-	}
+	setMotorValues();
+}
 
-	if(abs(controller_elev) < 2)
-	{
-		stabilizePitch();
-	}
-	//stabilizeYaw();
-
+void setMotorValues()
+{
 	// FL, FR, BL, BR
-	motors[0]->setThrottle(throValue);
-	motors[1]->setThrottle(throValue);
-	motors[2]->setThrottle(throValue);
-	motors[3]->setThrottle(throValue);
+	motors[0]->setThrottle(controllerThroValue);
+	motors[1]->setThrottle(controllerThroValue);
+	motors[2]->setThrottle(controllerThroValue);
+	motors[3]->setThrottle(controllerThroValue);
 
 	motors[0]->setYaw(ruddValue);
 	motors[1]->setYaw(-ruddValue);
@@ -187,11 +194,12 @@ void updateControllerValues()
 	for(i=0; i<4; i++)
 	{
 		 int total = motors[i]->getTotal();
-		 if(total >= 100 && total > constant_offset)
+		 if(total >= 100 && (total - 100) > constant_offset)
 		 {
 		 	constant_offset = total - 100;
 		 }
 	}
+	
 	for(i=0;i<4;i++)
 	{
 		motors[i]->setConstant(constant_offset);
@@ -200,32 +208,58 @@ void updateControllerValues()
 			motors[i]->setConstant(constant_offset+motors[i]->getAdjustedTotal());
 		}
 	}
+	
 }
 
+/*
+
+*/
+void stabilize()
+{
+	stabilizeRoll();
+	stabilizePitch();
+	//stabilizeYaw();
+}
+
+/*
+
+*/
 void updateThrottle()
 {
-	throValue = (pulseIn(throPin, HIGH)*100.0)/22000.0;
-	throValue = mapfloat(throValue, 4.4, 9.2, 0, 100);
+	float inputThroValue = (pulseIn(throPin, HIGH)*100.0)/22000.0;
+	controllerThroValue = mapfloat(inputThroValue, 4.4, 9.2, 0, 100);
 }
 
+/*
+
+*/
 void updateRudder()
 {
-	ruddValue = (pulseIn(ruddPin, HIGH)*100.0)/22000.0;
-	ruddValue = input_adjustment*(mapfloat(ruddValue, 4.4, 9.2, 0, 100) - 50.0);
+	float inputRuddValue = (pulseIn(ruddPin, HIGH)*100.0)/22000.0;
+	controllerRuddValue = input_adjustment*(mapfloat(inputRuddValue, 4.4, 9.2, 0, 100) - 50.0);
 }
 
+/*
+
+*/
 void updateElev()
 {
-	elevValue= (pulseIn(elevPin, HIGH)*100.0)/22000.0;
-	elevValue = input_adjustment*(mapfloat(elevValue, 4.4, 9.2, 0, 100) - 50.0);
+	float inputElevValue = (pulseIn(elevPin, HIGH)*100.0)/22000.0;
+	controllerElevValue = input_adjustment*(mapfloat(inputElevValue, 4.4, 9.2, 0, 100) - 50.0);
 }
 
+/*
+
+*/
 void updateAile()
 {
-	aileValue = (pulseIn(ailePin, HIGH)*100.0)/22000.0;
-	aileValue = input_adjustment*(mapfloat(aileValue, 4.4, 9.2, 0, 100) - 50.0);
+	float inputAileValue = (pulseIn(ailePin, HIGH)*100.0)/22000.0;
+	controllerAileValue = input_adjustment*(mapfloat(inputAileValue, 4.4, 9.2, 0, 100) - 50.0);
 }
 
+/*
+
+*/
 void initializeMotors()
 {
 	motors[0] = new Motor(FRONT_LEFT);
@@ -240,6 +274,9 @@ void initializeWire()
     Wire.begin();
 }
 
+/*
+
+*/
 void printIMUValues()
 {
 	// display tab-separated accel/gyro x/y/z values
@@ -252,6 +289,9 @@ void printIMUValues()
     Serial.print("z: "); Serial.println(gz_acc);
 }
 
+/*
+
+*/
 void updateIMUValues()
 {
 	// read raw accel/gyro measurements from device
@@ -267,29 +307,23 @@ void updateIMUValues()
     gz += -1*gz_off;
 
     // Translate into terms of g.
-    ax_acc = (float)ax/4096.0;
-    ay_acc = (float)ay/4096.0;
-    az_acc = (float)az/4096.0;
+    ax_acc = (float)ax/ACC_SENSITIVITY;
+    ay_acc = (float)ay/ACC_SENSITIVITY;
+    az_acc = (float)az/ACC_SENSITIVITY;
 
     // Translate into terms of degrees/s
-    gx_acc = (float)gx/65.5;
-    gy_acc = (float)gy/65.5;
-    gz_acc = (float)gz/65.5;
+    gx_acc = (float)gx/GYRO_SENSITIVITY;
+    gy_acc = (float)gy/GYRO_SENSITIVITY;
+    gz_acc = (float)gz/GYRO_SENSITIVITY;
 
-    // Update the vectors
-    delete(previous_acc_vector);
-    delete(previous_gyro_vector);
-    previous_acc_vector=new Vector(current_acc_vector->x, current_acc_vector->y, current_acc_vector->z);
-    previous_gyro_vector=new Vector(current_gyro_vector->x, current_gyro_vector->y, current_gyro_vector->z);
-
-    delete(current_acc_vector);
-    delete(current_gyro_vector);
-    current_acc_vector=new Vector(ax_acc, ay_acc, az_acc);
-    current_gyro_vector=new Vector(gx_acc, gy_acc, gz_acc);
 }
 
+/*
+
+*/
 void initializeIMU()
 {
+	Serial.println("Setting IMU offsets to 0...");
 	accelgyro.setXAccelOffset(0); 
     accelgyro.setYAccelOffset(0); 
     accelgyro.setZAccelOffset(0); 
@@ -309,6 +343,7 @@ void initializeIMU()
     Serial.println("Calibrating the IMU...");
     calibrateIMU();
     Serial.println("Finished calibration.");
+    
 }
 
 // Takes an average of 1000 readings from the IMU and averages them to get the offset.
@@ -317,6 +352,7 @@ void calibrateIMU()
 	float totalAX = 0, totalAY = 0, totalAZ = 0;
 	float totalGX = 0, totalGY = 0, totalGZ = 0;
 
+	Serial.println("Totalling IMU Values...");
 	for(int i = 0; i<1000;i++)
 	{
 		updateIMUValues();
@@ -331,41 +367,107 @@ void calibrateIMU()
 	}
 	Serial.println("Finished totaling...");
 
+	Serial.println("Averaging Total Values...");
 	ax_off = (int)(totalAX/1000.0);
 	ay_off = (int)(totalAY/1000.0);
-	az_off = (int)(totalAZ/1000.0) - 4096;
+	az_off = (int)(totalAZ/1000.0) - ACC_SENSITIVITY;
 
 	gx_off = (int)(totalGX/1000.0);
 	gy_off = (int)(totalGY/1000.0);
 	gz_off = (int)(totalGZ/1000.0);
 }
 
+/*
+
+*/
 void stabilizeRoll()
 {
-	float p_ax = (hover_acc_vector->x - current_acc_vector->x);
+	float currentRollAngle = calcRollAngle();
+	float desiredRollAngle = mapfloat(controllerAileValue, -50, 50, -45, 45);
 
-	//						Current error					-				previous error
-	//float d_ax = (hover_acc_vector->x - current_acc_vector->x) - (hover_acc_vector->x - previous_acc_vector->x);
+	float difference = currentRollAngle - desiredRollAngle;
 
-	aileValue += (-p_r * p_ax);// + (-d_r * d_ax);
+	aileValue = p_roll * difference;
 }
 
+float calcRollAngle()
+{
+	static float rollAngle;
+	// angle = 0.98 * (angle + gyrData * dt) + 0.02 * (accData)
+	// Roll along y-axis, pitch along x-axis
+	// Compensate for drift with accelerometer data if !bullshit
+    // Sensitivity = -4 to 4 G at 16Bit -> 2G = 16384 && 0.5G = 4096
+
+    float rollAcc = 0.0;
+	int forceMagnitudeApprox = abs(ax) + abs(ay) + abs(az);
+	if (forceMagnitudeApprox < 16384 && forceMagnitudeApprox > 4096)
+    {
+		// Turning around the Y axis results in a vector on the X-axis
+        rollAcc = atan2f(ax_acc, az_acc) * 180 / 3.14159265359;
+    }
+    else
+    {
+    	printIMUValues();
+    }
+
+	rollAngle = 0.98 * (rollAngle + -1*gy_acc * IMUPollPeriodSec) + 0.02 * (rollAcc);
+	// Serial.print("Roll Angle: ");
+	// Serial.println(rollAngle);
+
+	return rollAngle;
+}
+
+/*
+
+*/
 void stabilizePitch()
 {
-	float p_ay = (hover_acc_vector->y - current_acc_vector->y);
+	float currentPitchAngle = calcPitchAngle();
+	float desiredPitchAngle = mapfloat(controllerElevValue, -50, 50, -45, 45);
 
-	//float d_ay = (current_acc_vector->y - previous_acc_vector->y);
+	float difference = currentPitchAngle - desiredPitchAngle;
 
-	elevValue += (-p_p * p_ay);// + (d_r * d_ax);
+	elevValue = p_pitch * difference;
 }
 
+float calcPitchAngle()
+{
+	static float pitchAngle;
+	// angle = 0.98 * (angle + gyrData * dt) + 0.02 * (accData)
+	// Roll along y-axis, pitch along x-axis
+	// Compensate for drift with accelerometer data if !bullshit
+    // Sensitivity = -4 to 4 G at 16Bit -> 2G = 16384 && 0.5G = 4096
+
+    float pitchAcc = 0.0;
+	int forceMagnitudeApprox = abs(ax) + abs(ay) + abs(az);
+	if (forceMagnitudeApprox < 16384 && forceMagnitudeApprox > 4096)
+    {
+		// Turning around the Y axis results in a vector on the X-axis
+        pitchAcc = atan2f(ay_acc, az_acc) * 180 / 3.14159265359;
+    }
+    else
+    {
+    	printIMUValues();
+    }
+
+	pitchAngle = 0.98 * (pitchAngle + gx_acc * IMUPollPeriodSec) + 0.02 * (pitchAcc);
+	//Serial.print("Pitch Angle: ");
+	//Serial.println(pitchAngle);
+
+	return pitchAngle;
+}
+
+/*
+
+*/
 void stabilizeYaw()
 {
-	float p_gz = (hover_gyro_vector->z - current_gyro_vector->z);
 
-	ruddValue += -(-p_y * p_gz);
 }
 
+/*
+
+*/
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
 {
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
