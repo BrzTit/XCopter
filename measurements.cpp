@@ -8,7 +8,9 @@ MPU6050 accelgyro;
 // Offset values
 int16_t gx_off, gy_off, gz_off, ax_off, ay_off, az_off;
 
-float measurements[6];
+float raw_measurements[6];
+float buffered_measurements[6][BUFFER_SIZE];
+float filtered_measurements[6];
 float calculations[2];
 
 // ====================================================
@@ -18,7 +20,7 @@ void updateIMUValues()
 
     int16_t ax, ay, az, gx, gy, gz;
 
-	// read raw accel/gyro measurements from device
+	// read raw accel/gyro raw_measurements from device
     accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
     // Account for offsets
@@ -31,15 +33,44 @@ void updateIMUValues()
     gz += -1*gz_off;
 
     // Translate into terms of g.
-    measurements[0] = (float)ax/ACC_SENSITIVITY;
-    measurements[1] = (float)ay/ACC_SENSITIVITY;
-    measurements[2] = (float)az/ACC_SENSITIVITY;
+    raw_measurements[0] = (float)ax/ACC_SENSITIVITY;
+    raw_measurements[1] = (float)ay/ACC_SENSITIVITY;
+    raw_measurements[2] = (float)az/ACC_SENSITIVITY;
 
     // Translate into terms of degrees/s
-    measurements[3] = (float)gx/GYRO_SENSITIVITY;
-    measurements[4] = (float)gy/GYRO_SENSITIVITY;
-    measurements[5] = (float)gz/GYRO_SENSITIVITY;
+    raw_measurements[3] = (float)gx/GYRO_SENSITIVITY;
+    raw_measurements[4] = (float)gy/GYRO_SENSITIVITY;
+    raw_measurements[5] = (float)gz/GYRO_SENSITIVITY;
 
+}
+
+// Moving average filter for both gyro and accelerometer
+void filterMeasurements()
+{
+    // Circular buffer counter
+    static int counter = 0;
+
+    // Move all the raw measurements into the circular buffer
+    for(int i = 0; i < 6; i++)
+    {
+        buffered_measurements[i][counter] = raw_measurements[i];
+    }
+
+    // Average the measurements in the buffer and stick them into the filtered measurement array
+    float avg[6];
+    for(int p = 0; p < 6; p++)
+    {
+        for(int i = 0; i < BUFFER_SIZE; i++)
+        {
+            avg[p] += buffered_measurements[p][i];
+        }
+        filtered_measurements[p] = avg[p] / (float)BUFFER_SIZE;
+    }
+
+    // Incrememnt and roll over the circular buffer counter
+    counter += 1;
+    if(counter == BUFFER_SIZE)
+        {counter = 0;}
 }
 
 float calcRollAngle()
@@ -88,13 +119,13 @@ void calibrateIMU()
     {
         updateIMUValues();
 
-        sum_acceleration_x += measurements[0];
-        sum_acceleration_y += measurements[1];
-        sum_acceleration_z += measurements[2];
+        sum_acceleration_x += raw_measurements[0];
+        sum_acceleration_y += raw_measurements[1];
+        sum_acceleration_z += raw_measurements[2];
 
-        sum_gyro_x += measurements[3];
-        sum_gyro_y += measurements[4];
-        sum_gyro_z += measurements[5];
+        sum_gyro_x += raw_measurements[3];
+        sum_gyro_y += raw_measurements[4];
+        sum_gyro_z += raw_measurements[5];
     }
     Serial.println("Finished summing...");
 

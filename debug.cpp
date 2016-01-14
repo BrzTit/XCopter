@@ -20,10 +20,10 @@ void printControllerValues()
 void printIMUValues()
 {
 	// display tab-separated accel/gyro x/y/z values
-    Serial.print("ax: "); Serial.print(measurements[0]); Serial.print(" \t");
-    Serial.print("ay: "); Serial.print(measurements[1]); Serial.print(" \t");
-    Serial.print("az: "); Serial.print(measurements[2]); Serial.print(" \t");
-    Serial.print("gx: "); Serial.print(measurements[3]); Serial.print(" \t");
-    Serial.print("gy: "); Serial.print(measurements[4]); Serial.print("  \t");
-    Serial.print("gz: "); Serial.println(measurements[5]);
+    Serial.print("ax: "); Serial.print(raw_measurements[0]); Serial.print(" \t");
+    Serial.print("ay: "); Serial.print(raw_measurements[1]); Serial.print(" \t");
+    Serial.print("az: "); Serial.print(raw_measurements[2]); Serial.print(" \t");
+    Serial.print("gx: "); Serial.print(raw_measurements[3]); Serial.print(" \t");
+    Serial.print("gy: "); Serial.print(raw_measurements[4]); Serial.print("  \t");
+    Serial.print("gz: "); Serial.println(raw_measurements[5]);
 }
