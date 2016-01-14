@@ -1,5 +1,18 @@
 #include "measurements.h"
 
+
+// DATA DECLARATIONS
+// ===================================================
+MPU6050 accelgyro;
+
+// Offset values
+int16_t gx_off, gy_off, gz_off, ax_off, ay_off, az_off;
+
+float measurements[6];
+float calculations[2];
+
+// ====================================================
+
 void updateIMUValues()
 {
 
@@ -75,13 +88,13 @@ void calibrateIMU()
     {
         updateIMUValues();
 
-        sum_acceleration_x += ax;
-        sum_acceleration_y += ay;
-        sum_acceleration_z += az;
+        sum_acceleration_x += measurements[0];
+        sum_acceleration_y += measurements[1];
+        sum_acceleration_z += measurements[2];
 
-        sum_gyro_x += gx;
-        sum_gyro_y += gy;
-        sum_gyro_z += gz;
+        sum_gyro_x += measurements[3];
+        sum_gyro_y += measurements[4];
+        sum_gyro_z += measurements[5];
     }
     Serial.println("Finished summing...");
 

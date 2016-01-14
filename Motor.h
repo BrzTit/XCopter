@@ -1,5 +1,4 @@
-#ifndef MOTOR_H
-#define MOTOR_H
+#pragma once
 
 #include "Arduino.h"
 
@@ -10,6 +9,7 @@ public:
 	void write(); // Writes a speed to the motor; Input: 0 - 100
 	void stop();
 	void setPower(int p);
+	int getPower();
 	
 
 private:
@@ -17,4 +17,3 @@ private:
 	int pin;
 };
 
-#endif

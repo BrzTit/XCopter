@@ -1,5 +1,4 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+#pragma once
 
 #include "control.h"
 #include "input.h"
@@ -9,5 +8,3 @@
 void printMotorWriteValues();
 void printControllerValues();
 void printIMUValues();
-
-#endif

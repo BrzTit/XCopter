@@ -23,6 +23,11 @@ void Motor::stop()
 
 void Motor::setPower(int p)
 {
-	power = p
+	power = p;
+}
+
+int Motor::getPower()
+{
+	return power;
 }
 

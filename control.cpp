@@ -1,5 +1,8 @@
 #include "control.h"
 
+Motor* motors[4];
+int motor_power[4];
+
 void initializeMotors()
 {
 	motors[0] = new Motor(FRONT_LEFT);

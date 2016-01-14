@@ -1,5 +1,4 @@
-#ifndef INPUT_H
-#define INPUT_H
+#pragma once
 
 #include "Arduino.h"
 
@@ -9,10 +8,10 @@
 // MinAile: 4.46 MaxAile: 9.12
 // MinThro: 4.48 MaxThro: 9.10
 
-enum controller_pins {RUDDER_PIN = A11, ELEVATION_PIN = A10, AILE_PIN = A9, THROTTLE_PIN=A8}
+enum controller_pins {RUDDER_PIN = A11, ELEVATION_PIN = A10, AILE_PIN = A9, THROTTLE_PIN=A8};
 
 // Array containing the four input values: throttle, rudder, elevation, aile
-float input[4];
+extern float input[4];
 
 void updateControllerValues();
 void updateThrottle();
@@ -21,5 +20,3 @@ void updateElevation();
 void updateAile();
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max);
 void initializeControllerInputPins();
-
-#endif

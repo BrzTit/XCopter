@@ -1,9 +1,6 @@
-#ifndef XCOPTER_H
-#define XCOPTER_H
+#pragma once
 
 #include "Motor.h"
-#include "MPU6050.h"
-#include "Vector.h"
 #include "Wire.h"
 #include "I2Cdev.h"
 #include "Arduino.h"
@@ -23,5 +20,3 @@ void setup();
 void loop();
 void checkArmed();
 void checkDisarmed();
-
-#endif

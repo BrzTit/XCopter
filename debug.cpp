@@ -3,10 +3,10 @@
 //Prints the combined value being written to each motor to the Serial Monitor.
 void printMotorWriteValues()
 {
-	Serial.print(motors[0]->getAdjustedTotal()); Serial.print("\t");
-	Serial.print(motors[1]->getAdjustedTotal()); Serial.print("\t");
-	Serial.print(motors[2]->getAdjustedTotal()); Serial.print("\t");
-	Serial.print(motors[3]->getAdjustedTotal()); Serial.println();
+	Serial.print(motors[0]->getPower()); Serial.print("\t");
+	Serial.print(motors[1]->getPower()); Serial.print("\t");
+	Serial.print(motors[2]->getPower()); Serial.print("\t");
+	Serial.print(motors[3]->getPower()); Serial.println();
 }
 
 void printControllerValues()
