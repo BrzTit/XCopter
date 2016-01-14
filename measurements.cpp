@@ -13,6 +13,9 @@ float buffered_measurements[6][BUFFER_SIZE];
 float filtered_measurements[6];
 float calculations[2];
 
+float IMUPollPeriodMilliSec = 70;
+float IMUPollPeriodSecs = IMUPollPeriodMilliSec / 1000;
+
 // ====================================================
 
 void updateIMUValues()
@@ -73,14 +76,40 @@ void filterMeasurements()
         {counter = 0;}
 }
 
-float calcRollAngle()
+void calcRollAngle()
 {
-    return -1;
+    static float gyro_angle = 0, acc_angle = 0;
+
+    // Angle is rate * dt 
+    gyro_angle += filtered_measurements[4] * IMUPollPeriodSecs;
+
+    // Z faces up and out of quad
+    // X faces to the right of the quad
+    // Y faces forward of the quad
+
+    // Angle is given by geometry of gravity vector
+    // acc_angle = atan2(-x, -z);
+    acc_angle = atan2(-filtered_measurements[0], -filtered_measurements[2]);
+
+    calculations[0] = GYRO_PERCENTAGE * gyro_angle + ACC_PERCENTAGE * acc_angle;
 }
 
-float calcPitchAngle()
+void calcPitchAngle()
 {
-    return -1;
+    static float gyro_angle = 0, acc_angle = 0;
+
+    // Angle is rate * dt 
+    gyro_angle += filtered_measurements[3] * IMUPollPeriodSecs;
+
+    // Z faces up and out of quad
+    // X faces to the right of the quad
+    // Y faces forward of the quad
+
+    // Angle is given by geometry of gravity vector
+    // acc_angle = atan2(-y, -z);
+    acc_angle = atan2(-filtered_measurements[1], -filtered_measurements[2]);
+
+    calculations[1] = GYRO_PERCENTAGE * gyro_angle + ACC_PERCENTAGE * acc_angle;
 }
 
 void initializeIMU()
