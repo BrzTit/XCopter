@@ -89,7 +89,7 @@ void calcRollAngle()
 
     // Angle is given by geometry of gravity vector
     // acc_angle = atan2(-x, -z);
-    acc_angle = atan2(-filtered_measurements[0], -filtered_measurements[2]);
+    acc_angle = atan2(-filtered_measurements[0], -filtered_measurements[2]) * (180.0 / M_PI);
 
     calculations[0] = GYRO_PERCENTAGE * gyro_angle + ACC_PERCENTAGE * acc_angle;
 }
@@ -107,7 +107,7 @@ void calcPitchAngle()
 
     // Angle is given by geometry of gravity vector
     // acc_angle = atan2(-y, -z);
-    acc_angle = atan2(-filtered_measurements[1], -filtered_measurements[2]);
+    acc_angle = atan2(-filtered_measurements[1], -filtered_measurements[2]) * (180.0 / M_PI);
 
     calculations[1] = GYRO_PERCENTAGE * gyro_angle + ACC_PERCENTAGE * acc_angle;
 }
