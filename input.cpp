@@ -1,6 +1,7 @@
 #include "input.h"
 
 float input[4];
+float desired_values[4];
 
 void updateControllerValues()
 {
@@ -8,6 +9,7 @@ void updateControllerValues()
 	updateRudder();
 	updateElevation();
 	updateAile();
+	calculateDesiredValues();
 }
 
 void updateThrottle()
@@ -49,4 +51,13 @@ void initializeControllerInputPins()
 	pinMode(ELEVATION_PIN, INPUT);
 	pinMode(AILE_PIN, INPUT);
 	pinMode(THROTTLE_PIN, INPUT);
+}
+
+void calculateDesiredValues()
+{
+	// Array containing the four desired values: throttle, roll, pitch, yaw
+	desired_values[0] = input[0];
+	desired_values[1] = mapfloat(input[3],-50,50,45,-45);
+	desired_values[2] = mapfloat(input[2],-50,50,45,-45);
+	desired_values[3] = mapfloat(input[1],-50,50,45,-45);
 }

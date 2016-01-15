@@ -13,9 +13,6 @@ bool ARMED = false;
 
 long timer;
 
-float IMUPollPeriodMSec = 70;
-float IMUPollPeriodSec = IMUPollPeriodMSec / 1000;
-
 void setup();
 void loop();
 void checkArmed();

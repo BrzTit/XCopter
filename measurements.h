@@ -3,6 +3,7 @@
 #include "MPU6050.h"
 #include "Arduino.h"
 #include "Math.h"
+#include "control.h"
 
 const float ACC_SENSITIVITY = 16384.0;
 const float GYRO_SENSITIVITY = 131.072;

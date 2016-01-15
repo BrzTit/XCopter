@@ -13,9 +13,6 @@ float buffered_measurements[6][BUFFER_SIZE];
 float filtered_measurements[6];
 float calculations[2];
 
-float IMUPollPeriodMilliSec = 70;
-float IMUPollPeriodSecs = IMUPollPeriodMilliSec / 1000;
-
 // ====================================================
 
 void updateIMUValues()
@@ -81,7 +78,7 @@ void calcRollAngle()
     static float gyro_angle = 0, acc_angle = 0;
 
     // Angle is rate * dt 
-    gyro_angle += filtered_measurements[4] * IMUPollPeriodSecs;
+    gyro_angle += filtered_measurements[4] * IMUPollPeriodSec;
 
     // Z faces up and out of quad
     // X faces to the right of the quad
@@ -99,7 +96,7 @@ void calcPitchAngle()
     static float gyro_angle = 0, acc_angle = 0;
 
     // Angle is rate * dt 
-    gyro_angle += filtered_measurements[3] * IMUPollPeriodSecs;
+    gyro_angle += filtered_measurements[3] * IMUPollPeriodSec;
 
     // Z faces up and out of quad
     // X faces to the right of the quad

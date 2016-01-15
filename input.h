@@ -13,6 +13,9 @@ enum controller_pins {RUDDER_PIN = A11, ELEVATION_PIN = A10, AILE_PIN = A9, THRO
 // Array containing the four input values: throttle, rudder, elevation, aile
 extern float input[4];
 
+// Array containing the four desired values: throttle, roll, pitch, yaw
+extern float desired_values[4];
+
 void updateControllerValues();
 void updateThrottle();
 void updateRudder();
@@ -20,3 +23,4 @@ void updateElevation();
 void updateAile();
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max);
 void initializeControllerInputPins();
+void calculateDesiredValues();
