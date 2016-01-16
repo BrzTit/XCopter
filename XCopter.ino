@@ -30,25 +30,26 @@ void loop()
 	timer = millis();
 
 	updateIMUValues();
-	updateControllerValues();
+	// updateControllerValues();
 
 	// printRawIMUValues();
+	printTranslatedIMUValues();
 	// printFilteredIMUValues();
 	// printControllerValues();
 	// printMotorWriteValues();
 
 	// controlFlight();
 
-	if(ARMED == true)
-	{
-		writeMotors();
-		checkDisarmed();
-	}
-	else
-	{
-		stopMotors();
-		checkArmed();
-	}
+	// if(ARMED == true)
+	// {
+	// 	writeMotors();
+	// 	checkDisarmed();
+	// }
+	// else
+	// {
+	// 	stopMotors();
+	// 	checkArmed();
+	// }
 }
 
 /*

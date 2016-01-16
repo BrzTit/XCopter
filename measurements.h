@@ -13,6 +13,7 @@ const float ACC_PERCENTAGE = (1 - GYRO_PERCENTAGE);
 
 // Array containing the 6 measured values: ax, ay, az, gx, gy, gz
 extern float raw_measurements[6];
+extern float translated_measurements[6];
 extern float buffered_measurements[6][BUFFER_SIZE];
 extern float filtered_measurements[6];
 

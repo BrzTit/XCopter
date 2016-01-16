@@ -9,6 +9,7 @@ MPU6050 accelgyro;
 int16_t gx_off = 0, gy_off = 0, gz_off = 0, ax_off = 0, ay_off = 0, az_off = 0;
 
 float raw_measurements[6];
+float translated_measurements[6];
 float buffered_measurements[6][BUFFER_SIZE];
 float filtered_measurements[6];
 float calculations[2];
@@ -41,14 +42,24 @@ void updateIMUValues()
     // Serial.print("gz: "); Serial.println(gz);
 
     // Translate into terms of g.
-    raw_measurements[0] = ((float)ax) / ACC_SENSITIVITY;
-    raw_measurements[1] = ((float)ay) / ACC_SENSITIVITY;
-    raw_measurements[2] = ((float)az) / ACC_SENSITIVITY;
+    raw_measurements[0] = ((float)ax);
+    raw_measurements[1] = ((float)ay);
+    raw_measurements[2] = ((float)az);
 
     // Translate into terms of degrees/s
-    raw_measurements[3] = ((float)gx) / GYRO_SENSITIVITY;
-    raw_measurements[4] = ((float)gy) / GYRO_SENSITIVITY;
-    raw_measurements[5] = ((float)gz) / GYRO_SENSITIVITY;
+    raw_measurements[3] = ((float)gx);
+    raw_measurements[4] = ((float)gy);
+    raw_measurements[5] = ((float)gz);
+
+    for(int i = 0; i < 3; i++)
+    {
+        translated_measurements[i] = raw_measurements[i] / ACC_SENSITIVITY;
+    }
+
+    for(int i = 3; i < 6; i++)
+    {
+        translated_measurements[i] = raw_measurements[i] / GYRO_SENSITIVITY;
+    }
 
 }
 
@@ -61,7 +72,7 @@ void filterMeasurements()
     // Move all the raw measurements into the circular buffer
     for(int i = 0; i < 6; i++)
     {
-        buffered_measurements[i][counter] = raw_measurements[i];
+        buffered_measurements[i][counter] = translated_measurements[i];
     }
 
     // Average the measurements in the buffer and stick them into the filtered measurement array
@@ -173,10 +184,10 @@ void calibrateIMU()
     gy_off = (int)(sum_gyro_y/1000.0);
     gz_off = (int)(sum_gyro_z/1000.0);
 
-    Serial.print("ax: "); Serial.print(sum_acceleration_x); Serial.print(" \t");
-    Serial.print("ay: "); Serial.print(sum_acceleration_y); Serial.print(" \t");
-    Serial.print("az: "); Serial.print(sum_acceleration_z); Serial.print(" \t");
-    Serial.print("gx: "); Serial.print(sum_gyro_x); Serial.print(" \t");
-    Serial.print("gy: "); Serial.print(sum_gyro_y); Serial.print("  \t");
-    Serial.print("gz: "); Serial.println(sum_gyro_z);
+    // Serial.print("ax: "); Serial.print(sum_acceleration_x); Serial.print(" \t");
+    // Serial.print("ay: "); Serial.print(sum_acceleration_y); Serial.print(" \t");
+    // Serial.print("az: "); Serial.print(sum_acceleration_z); Serial.print(" \t");
+    // Serial.print("gx: "); Serial.print(sum_gyro_x); Serial.print(" \t");
+    // Serial.print("gy: "); Serial.print(sum_gyro_y); Serial.print("  \t");
+    // Serial.print("gz: "); Serial.println(sum_gyro_z);
 }
