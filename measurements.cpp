@@ -6,7 +6,7 @@
 MPU6050 accelgyro;
 
 // Offset values
-int16_t gx_off, gy_off, gz_off, ax_off, ay_off, az_off;
+int16_t gx_off = 0, gy_off = 0, gz_off = 0, ax_off = 0, ay_off = 0, az_off = 0;
 
 float raw_measurements[6];
 float buffered_measurements[6][BUFFER_SIZE];
@@ -31,6 +31,14 @@ void updateIMUValues()
     gx += -1*gx_off;
     gy += -1*gy_off;
     gz += -1*gz_off;
+
+    // display tab-separated accel/gyro x/y/z values
+    // Serial.print("ax: "); Serial.print(ax); Serial.print(" \t");
+    // Serial.print("ay: "); Serial.print(ay); Serial.print(" \t");
+    // Serial.print("az: "); Serial.print(az); Serial.print(" \t");
+    // Serial.print("gx: "); Serial.print(gx); Serial.print(" \t");
+    // Serial.print("gy: "); Serial.print(gy); Serial.print("  \t");
+    // Serial.print("gz: "); Serial.println(gz);
 
     // Translate into terms of g.
     raw_measurements[0] = ((float)ax) / ACC_SENSITIVITY;
@@ -164,4 +172,11 @@ void calibrateIMU()
     gx_off = (int)(sum_gyro_x/1000.0);
     gy_off = (int)(sum_gyro_y/1000.0);
     gz_off = (int)(sum_gyro_z/1000.0);
+
+    Serial.print("ax: "); Serial.print(sum_acceleration_x); Serial.print(" \t");
+    Serial.print("ay: "); Serial.print(sum_acceleration_y); Serial.print(" \t");
+    Serial.print("az: "); Serial.print(sum_acceleration_z); Serial.print(" \t");
+    Serial.print("gx: "); Serial.print(sum_gyro_x); Serial.print(" \t");
+    Serial.print("gy: "); Serial.print(sum_gyro_y); Serial.print("  \t");
+    Serial.print("gz: "); Serial.println(sum_gyro_z);
 }
