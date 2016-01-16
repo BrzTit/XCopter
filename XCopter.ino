@@ -32,8 +32,8 @@ void loop()
 	updateIMUValues();
 	// updateControllerValues();
 
-	// printRawIMUValues();
-	printTranslatedIMUValues();
+	printRawIMUValues();
+	// printTranslatedIMUValues();
 	// printFilteredIMUValues();
 	// printControllerValues();
 	// printMotorWriteValues();

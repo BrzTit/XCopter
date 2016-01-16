@@ -24,38 +24,21 @@ void updateIMUValues()
 	// read raw accel/gyro raw_measurements from device
     accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
-    // Account for offsets
-    ax += -1*ax_off;
-    ay += -1*ay_off;
-    az += -1*az_off;
-
-    gx += -1*gx_off;
-    gy += -1*gy_off;
-    gz += -1*gz_off;
-
-    // display tab-separated accel/gyro x/y/z values
-    // Serial.print("ax: "); Serial.print(ax); Serial.print(" \t");
-    // Serial.print("ay: "); Serial.print(ay); Serial.print(" \t");
-    // Serial.print("az: "); Serial.print(az); Serial.print(" \t");
-    // Serial.print("gx: "); Serial.print(gx); Serial.print(" \t");
-    // Serial.print("gy: "); Serial.print(gy); Serial.print("  \t");
-    // Serial.print("gz: "); Serial.println(gz);
-
-    // Translate into terms of g.
     raw_measurements[0] = ((float)ax);
     raw_measurements[1] = ((float)ay);
     raw_measurements[2] = ((float)az);
 
-    // Translate into terms of degrees/s
     raw_measurements[3] = ((float)gx);
     raw_measurements[4] = ((float)gy);
     raw_measurements[5] = ((float)gz);
 
+    // Translate into terms of g.
     for(int i = 0; i < 3; i++)
     {
         translated_measurements[i] = raw_measurements[i] / ACC_SENSITIVITY;
     }
 
+    // Translate into terms of degrees/s
     for(int i = 3; i < 6; i++)
     {
         translated_measurements[i] = raw_measurements[i] / GYRO_SENSITIVITY;
@@ -148,19 +131,19 @@ void initializeIMU()
     Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
     Serial.println("Calibrating the IMU...");
-    calibrateIMU();
+    while(calibrateIMU() == false);
     Serial.println("Finished calibration.");
     
 }
 
-// Takes an average of 1000 readings from the IMU and averages them to get the offset.
-void calibrateIMU()
+// Takes an average of 100 readings from the IMU and averages them to get the offset.
+bool calibrateIMU()
 {
     float sum_acceleration_x = 0, sum_acceleration_y = 0, sum_acceleration_z = 0;
     float sum_gyro_x = 0, sum_gyro_y = 0, sum_gyro_z = 0;
 
     Serial.println("Summing IMU Values...");
-    for(int i = 0; i<1000;i++)
+    for(int i = 0; i<100;i++)
     {
         updateIMUValues();
 
@@ -175,19 +158,59 @@ void calibrateIMU()
     Serial.println("Finished summing...");
 
     Serial.println("Averaging Total Values...");
-    ax_off = (int)(sum_acceleration_x/1000.0);
-    ay_off = (int)(sum_acceleration_y/1000.0);
-    az_off = (int)(sum_acceleration_z/1000.0) - ACC_SENSITIVITY;
+    ax_off = ((int)((sum_acceleration_x/100.0) / 8.0));
+    ay_off = ((int)((sum_acceleration_y/100.0) / 8.0));
+    az_off = (int)((sum_acceleration_z/100.0 - ACC_SENSITIVITY) / 8.0);
 
     Serial.println("Applying offsets...");
-    gx_off = (int)(sum_gyro_x/1000.0);
-    gy_off = (int)(sum_gyro_y/1000.0);
-    gz_off = (int)(sum_gyro_z/1000.0);
+    gx_off = (int)((sum_gyro_x/100.0) / 4.0);
+    gy_off = (int)((sum_gyro_y/100.0) / 4.0);
+    gz_off = (int)((sum_gyro_z/100.0) / 4.0);
 
-    // Serial.print("ax: "); Serial.print(sum_acceleration_x); Serial.print(" \t");
-    // Serial.print("ay: "); Serial.print(sum_acceleration_y); Serial.print(" \t");
-    // Serial.print("az: "); Serial.print(sum_acceleration_z); Serial.print(" \t");
-    // Serial.print("gx: "); Serial.print(sum_gyro_x); Serial.print(" \t");
-    // Serial.print("gy: "); Serial.print(sum_gyro_y); Serial.print("  \t");
-    // Serial.print("gz: "); Serial.println(sum_gyro_z);
+    // Serial.print("ax: "); Serial.print(ax_off); Serial.print(" \t");
+    // Serial.print("ay: "); Serial.print(ay_off); Serial.print(" \t");
+    // Serial.print("az: "); Serial.print(az_off); Serial.print(" \t");
+    // Serial.print("gx: "); Serial.print(gx_off); Serial.print(" \t");
+    // Serial.print("gy: "); Serial.print(gy_off); Serial.print("  \t");
+    // Serial.print("gz: "); Serial.println(gz_off);
+
+    accelgyro.setXAccelOffset(accelgyro.getXAccelOffset() - ax_off); 
+    accelgyro.setYAccelOffset(accelgyro.getYAccelOffset() - ay_off); 
+    accelgyro.setZAccelOffset(accelgyro.getZAccelOffset() - az_off); 
+
+    accelgyro.setXGyroOffset(accelgyro.getXGyroOffset() - gx_off); 
+    accelgyro.setYGyroOffset(accelgyro.getXGyroOffset() - gy_off); 
+    accelgyro.setZGyroOffset(accelgyro.getXGyroOffset() - gz_off);
+
+    // Test the offset values
+    Serial.println("Testing...");
+
+    sum_acceleration_x = 0, sum_acceleration_y = 0, sum_acceleration_z = 0;
+    sum_gyro_x = 0, sum_gyro_y = 0, sum_gyro_z = 0;
+
+    for(int i = 0; i < 100; i ++)
+    {
+        sum_acceleration_x += raw_measurements[0];
+        sum_acceleration_y += raw_measurements[1];
+        sum_acceleration_z += raw_measurements[2];
+
+        sum_gyro_x += raw_measurements[3];
+        sum_gyro_y += raw_measurements[4];
+        sum_gyro_z += raw_measurements[5];
+    }
+
+    ax_off = (int)(sum_acceleration_x/100.0);
+    ay_off = (int)(sum_acceleration_y/100.0);
+    az_off = (int)(sum_acceleration_z/100.0 - ACC_SENSITIVITY);
+
+    gx_off = (int)(sum_gyro_x/100.0);
+    gy_off = (int)(sum_gyro_y/100.0);
+    gz_off = (int)(sum_gyro_z/100.0);
+
+    int accel_tolerance = 500, gyro_tolerance = 15;
+
+    return (abs(ax_off) < accel_tolerance) && (abs(ay_off) < accel_tolerance) && (abs(az_off) < accel_tolerance)
+    && (abs(gx_off) < gyro_tolerance) && (abs(gy_off) < gyro_tolerance) && (abs(gz_off) < gyro_tolerance);
+
+
 }

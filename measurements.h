@@ -24,5 +24,5 @@ void updateIMUValues();
 void calcRollAngle();
 void calcPitchAngle();
 void initializeIMU();
-void calibrateIMU();
+bool calibrateIMU();
 void filterMeasurements();
