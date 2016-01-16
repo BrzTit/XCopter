@@ -33,14 +33,14 @@ void updateIMUValues()
     gz += -1*gz_off;
 
     // Translate into terms of g.
-    raw_measurements[0] = (float)ax/ACC_SENSITIVITY;
-    raw_measurements[1] = (float)ay/ACC_SENSITIVITY;
-    raw_measurements[2] = (float)az/ACC_SENSITIVITY;
+    raw_measurements[0] = ((float)ax) / ACC_SENSITIVITY;
+    raw_measurements[1] = ((float)ay) / ACC_SENSITIVITY;
+    raw_measurements[2] = ((float)az) / ACC_SENSITIVITY;
 
     // Translate into terms of degrees/s
-    raw_measurements[3] = (float)gx/GYRO_SENSITIVITY;
-    raw_measurements[4] = (float)gy/GYRO_SENSITIVITY;
-    raw_measurements[5] = (float)gz/GYRO_SENSITIVITY;
+    raw_measurements[3] = ((float)gx) / GYRO_SENSITIVITY;
+    raw_measurements[4] = ((float)gy) / GYRO_SENSITIVITY;
+    raw_measurements[5] = ((float)gz) / GYRO_SENSITIVITY;
 
 }
 

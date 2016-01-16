@@ -7,4 +7,5 @@
 
 void printMotorWriteValues();
 void printControllerValues();
-void printIMUValues();
+void printFilteredIMUValues();
+void printRawIMUValues();

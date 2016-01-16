@@ -9,11 +9,11 @@ void setup()
 	initializeControllerInputPins();	// Initializes the pins for controller input
 	initializeMotors();					// Creates 4 motor objects and stores them into motors[]
 
-	while(ARMED == false)				// Wait for quad to be armed
-	{
-		updateControllerValues();		// Poll and store controller values
-		checkArmed();					// Test whether controller is armed
-	}
+	// while(ARMED == false)				// Wait for quad to be armed
+	// {
+	// 	updateControllerValues();		// Poll and store controller values
+	// 	checkArmed();					// Test whether controller is armed
+	// }
 
 	initializeIMU();					// Initialize and calibrate the IMU
 	timer = millis();
@@ -32,11 +32,12 @@ void loop()
 	updateIMUValues();
 	updateControllerValues();
 
-	//printIMUValues();
-	//printControllerValues();
-	//printMotorWriteValues();
+	printRawIMUValues();
+	// printFilteredIMUValues();
+	// printControllerValues();
+	// printMotorWriteValues();
 
-	controlFlight();
+	// controlFlight();
 
 	if(ARMED == true)
 	{

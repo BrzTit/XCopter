@@ -17,7 +17,7 @@ void printControllerValues()
 	Serial.println("Aile:      "); 	Serial.print(input[3]); 
 }
 
-void printIMUValues()
+void printRawIMUValues()
 {
 	// display tab-separated accel/gyro x/y/z values
     Serial.print("ax: "); Serial.print(raw_measurements[0]); Serial.print(" \t");
@@ -26,4 +26,15 @@ void printIMUValues()
     Serial.print("gx: "); Serial.print(raw_measurements[3]); Serial.print(" \t");
     Serial.print("gy: "); Serial.print(raw_measurements[4]); Serial.print("  \t");
     Serial.print("gz: "); Serial.println(raw_measurements[5]);
+}
+
+void printFilteredIMUValues()
+{
+	// display tab-separated accel/gyro x/y/z values
+    Serial.print("ax: "); Serial.print(filtered_measurements[0]); Serial.print(" \t");
+    Serial.print("ay: "); Serial.print(filtered_measurements[1]); Serial.print(" \t");
+    Serial.print("az: "); Serial.print(filtered_measurements[2]); Serial.print(" \t");
+    Serial.print("gx: "); Serial.print(filtered_measurements[3]); Serial.print(" \t");
+    Serial.print("gy: "); Serial.print(filtered_measurements[4]); Serial.print("  \t");
+    Serial.print("gz: "); Serial.println(filtered_measurements[5]);
 }
