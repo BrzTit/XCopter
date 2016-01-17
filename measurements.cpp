@@ -38,11 +38,17 @@ void updateIMUValues()
         translated_measurements[i] = raw_measurements[i] / ACC_SENSITIVITY;
     }
 
+    // Invert the Z axis
+    translated_measurements[2] = -translated_measurements[2];
+
     // Translate into terms of degrees/s
     for(int i = 3; i < 6; i++)
     {
         translated_measurements[i] = raw_measurements[i] / GYRO_SENSITIVITY;
     }
+    filterMeasurements();
+    calcRollAngle();
+    calcPitchAngle();
 
 }
 
@@ -59,7 +65,7 @@ void filterMeasurements()
     }
 
     // Average the measurements in the buffer and stick them into the filtered measurement array
-    float avg[6];
+    float avg[6] = {0, 0, 0, 0, 0, 0};
     for(int p = 0; p < 6; p++)
     {
         for(int i = 0; i < BUFFER_SIZE; i++)
@@ -167,13 +173,6 @@ bool calibrateIMU()
     gy_off = (int)((sum_gyro_y/100.0) / 4.0);
     gz_off = (int)((sum_gyro_z/100.0) / 4.0);
 
-    // Serial.print("ax: "); Serial.print(ax_off); Serial.print(" \t");
-    // Serial.print("ay: "); Serial.print(ay_off); Serial.print(" \t");
-    // Serial.print("az: "); Serial.print(az_off); Serial.print(" \t");
-    // Serial.print("gx: "); Serial.print(gx_off); Serial.print(" \t");
-    // Serial.print("gy: "); Serial.print(gy_off); Serial.print("  \t");
-    // Serial.print("gz: "); Serial.println(gz_off);
-
     accelgyro.setXAccelOffset(accelgyro.getXAccelOffset() - ax_off); 
     accelgyro.setYAccelOffset(accelgyro.getYAccelOffset() - ay_off); 
     accelgyro.setZAccelOffset(accelgyro.getZAccelOffset() - az_off); 
@@ -207,7 +206,8 @@ bool calibrateIMU()
     gy_off = (int)(sum_gyro_y/100.0);
     gz_off = (int)(sum_gyro_z/100.0);
 
-    int accel_tolerance = 500, gyro_tolerance = 15;
+    // 0.03g or .22 deg/s
+    int accel_tolerance = 500, gyro_tolerance = 30;
 
     return (abs(ax_off) < accel_tolerance) && (abs(ay_off) < accel_tolerance) && (abs(az_off) < accel_tolerance)
     && (abs(gx_off) < gyro_tolerance) && (abs(gy_off) < gyro_tolerance) && (abs(gz_off) < gyro_tolerance);

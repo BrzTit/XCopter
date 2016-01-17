@@ -49,3 +49,9 @@ void printFilteredIMUValues()
     Serial.print("gy: "); Serial.print(filtered_measurements[4]); Serial.print("  \t");
     Serial.print("gz: "); Serial.println(filtered_measurements[5]);
 }
+
+void printCalculatedAngles()
+{
+    Serial.print("Roll: "); Serial.print(calculations[0]); Serial.print("  \t");
+    Serial.print("Pitch: "); Serial.println(calculations[1]);
+}

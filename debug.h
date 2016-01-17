@@ -10,3 +10,4 @@ void printControllerValues();
 void printFilteredIMUValues();
 void printRawIMUValues();
 void printTranslatedIMUValues();
+void printCalculatedAngles();
