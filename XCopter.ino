@@ -30,6 +30,8 @@ void loop()
 	timer = millis();
 
 	updateIMUValues();
+	calcRollAngle();
+    calcPitchAngle();
 	// updateControllerValues();
 
 	// printRawIMUValues();

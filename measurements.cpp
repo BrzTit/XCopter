@@ -47,9 +47,6 @@ void updateIMUValues()
         translated_measurements[i] = raw_measurements[i] / GYRO_SENSITIVITY;
     }
     filterMeasurements();
-    calcRollAngle();
-    calcPitchAngle();
-
 }
 
 // Moving average filter for both gyro and accelerometer
@@ -139,6 +136,7 @@ void initializeIMU()
     Serial.println("Calibrating the IMU...");
     while(calibrateIMU() == false);
     Serial.println("Finished calibration.");
+        delay(5000);
     
 }
 
@@ -149,7 +147,7 @@ bool calibrateIMU()
     float sum_gyro_x = 0, sum_gyro_y = 0, sum_gyro_z = 0;
 
     Serial.println("Summing IMU Values...");
-    for(int i = 0; i<100;i++)
+    for(int i = 0; i<500;i++)
     {
         updateIMUValues();
 
@@ -164,22 +162,22 @@ bool calibrateIMU()
     Serial.println("Finished summing...");
 
     Serial.println("Averaging Total Values...");
-    ax_off = ((int)((sum_acceleration_x/100.0) / 8.0));
-    ay_off = ((int)((sum_acceleration_y/100.0) / 8.0));
-    az_off = (int)((sum_acceleration_z/100.0 - ACC_SENSITIVITY) / 8.0);
+    ax_off = ((int)((sum_acceleration_x/500.0) / 8.0));
+    ay_off = ((int)((sum_acceleration_y/500.0) / 8.0));
+    az_off = (int)((sum_acceleration_z/500.0 - ACC_SENSITIVITY) / 8.0);
 
     Serial.println("Applying offsets...");
-    gx_off = (int)((sum_gyro_x/100.0) / 4.0);
-    gy_off = (int)((sum_gyro_y/100.0) / 4.0);
-    gz_off = (int)((sum_gyro_z/100.0) / 4.0);
+    gx_off = (int)((sum_gyro_x/500.0) / 4.0);
+    gy_off = (int)((sum_gyro_y/500.0) / 4.0);
+    gz_off = (int)((sum_gyro_z/500.0) / 4.0);
 
     accelgyro.setXAccelOffset(accelgyro.getXAccelOffset() - ax_off); 
     accelgyro.setYAccelOffset(accelgyro.getYAccelOffset() - ay_off); 
     accelgyro.setZAccelOffset(accelgyro.getZAccelOffset() - az_off); 
 
     accelgyro.setXGyroOffset(accelgyro.getXGyroOffset() - gx_off); 
-    accelgyro.setYGyroOffset(accelgyro.getXGyroOffset() - gy_off); 
-    accelgyro.setZGyroOffset(accelgyro.getXGyroOffset() - gz_off);
+    accelgyro.setYGyroOffset(accelgyro.getYGyroOffset() - gy_off); 
+    accelgyro.setZGyroOffset(accelgyro.getZGyroOffset() - gz_off);
 
     // Test the offset values
     Serial.println("Testing...");
@@ -187,7 +185,7 @@ bool calibrateIMU()
     sum_acceleration_x = 0, sum_acceleration_y = 0, sum_acceleration_z = 0;
     sum_gyro_x = 0, sum_gyro_y = 0, sum_gyro_z = 0;
 
-    for(int i = 0; i < 100; i ++)
+    for(int i = 0; i < 500; i ++)
     {
         sum_acceleration_x += raw_measurements[0];
         sum_acceleration_y += raw_measurements[1];
@@ -198,16 +196,16 @@ bool calibrateIMU()
         sum_gyro_z += raw_measurements[5];
     }
 
-    ax_off = (int)(sum_acceleration_x/100.0);
-    ay_off = (int)(sum_acceleration_y/100.0);
-    az_off = (int)(sum_acceleration_z/100.0 - ACC_SENSITIVITY);
+    ax_off = (int)(sum_acceleration_x/500.0);
+    ay_off = (int)(sum_acceleration_y/500.0);
+    az_off = (int)(sum_acceleration_z/500.0 - ACC_SENSITIVITY);
 
-    gx_off = (int)(sum_gyro_x/100.0);
-    gy_off = (int)(sum_gyro_y/100.0);
-    gz_off = (int)(sum_gyro_z/100.0);
+    gx_off = (int)(sum_gyro_x/500.0);
+    gy_off = (int)(sum_gyro_y/500.0);
+    gz_off = (int)(sum_gyro_z/500.0);
 
     // 0.03g or .22 deg/s
-    int accel_tolerance = 500, gyro_tolerance = 30;
+    int accel_tolerance = 250, gyro_tolerance = 15;
 
     return (abs(ax_off) < accel_tolerance) && (abs(ay_off) < accel_tolerance) && (abs(az_off) < accel_tolerance)
     && (abs(gx_off) < gyro_tolerance) && (abs(gy_off) < gyro_tolerance) && (abs(gz_off) < gyro_tolerance);
