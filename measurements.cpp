@@ -84,7 +84,9 @@ void calcRollAngle()
 
     // Angle is rate * dt 
     gyro_angle += filtered_measurements[4] * IMUPollPeriodSec;
-    gyro_angle = (abs(gyro_angle) - ((int)abs(gyro_angle) / 360) * 360) * (abs(gyro_angle)/gyro_angle);
+
+    // Constraining the angle to +- pi
+    gyro_angle = atan2(sin(gyro_angle * DEG_TO_RAD), cos(gyro_angle * DEG_TO_RAD)) * RAD_TO_DEG;
 
     // Z faces up and out of quad
     // X faces to the right of the quad
@@ -103,7 +105,9 @@ void calcPitchAngle()
 
     // Angle is rate * dt 
     gyro_angle += filtered_measurements[3] * IMUPollPeriodSec;
-    gyro_angle = (abs(gyro_angle) - ((int)abs(gyro_angle) / 360) * 360) * (abs(gyro_angle)/gyro_angle);
+
+    // Constraining the angle to +- pi
+    gyro_angle = atan2(sin(gyro_angle * DEG_TO_RAD), cos(gyro_angle * DEG_TO_RAD)) * RAD_TO_DEG;
 
     // Z faces up and out of quad
     // X faces to the right of the quad
