@@ -8,6 +8,7 @@
 #include <Eigen30.h>
 #include <Eigen/LU>
 
+
 const float ACC_SENSITIVITY = 16384.0;
 const float GYRO_SENSITIVITY = 131.072;
 const int BUFFER_SIZE = 1;

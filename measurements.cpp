@@ -17,18 +17,18 @@ float calculations[2];
 float q1, q2, q3;
 float r1 = 0.1, r2 = 0.9;
 
-Eigen::MatrixXd X(3,1);
-Eigen::MatrixXd A(3,3);
-Eigen::MatrixXd Q(3,3);
-Eigen::MatrixXd P(3,3);
-Eigen::MatrixXd H(2,3);
-Eigen::MatrixXd R(2,2);
-Eigen::MatrixXd I(3,3);
+Eigen::MatrixXf X(3,1);
+Eigen::MatrixXf A(3,3);
+Eigen::MatrixXf Q(3,3);
+Eigen::MatrixXf P(3,3);
+Eigen::MatrixXf H(2,3);
+Eigen::MatrixXf R(2,2);
+Eigen::MatrixXf I(3,3);
 
-Eigen::MatrixXd Z(2,1);
-Eigen::MatrixXd Y(2,1);
-Eigen::MatrixXd S(2,2);
-Eigen::MatrixXd K(3,2);
+Eigen::MatrixXf Z(2,1);
+Eigen::MatrixXf Y(2,1);
+Eigen::MatrixXf S(2,2);
+Eigen::MatrixXf K(3,2);
 
 // ====================================================
 
@@ -131,7 +131,7 @@ void filterMeasurements()
         {counter = 0;}
 }
 
-void print_mtxf(const Eigen::MatrixXd& X)  
+void print_mtxf(const Eigen::MatrixXf& X)  
 {
    int i, j, nrow, ncol;
    
@@ -165,21 +165,22 @@ void calcRollAngle()
     float acc_angle = atan2(-filtered_measurements[0], -filtered_measurements[2]) * (180.0 / M_PI);
     Serial.println(acc_angle);
 
-    print_mtxf(X);
-    print_mtxf(A);
+    Eigen::Matrix2f tmp;
+    tmp << 1, 2, 3, 4;
+
+    print_mtxf(tmp * tmp);
 
     // Predict
-    X = A * X;
-    Serial.println("Here");
-    P = A * P * A.transpose() + Q;
+    // X = A*X;
+    // P = A * P * A.transpose() + Q;
 
 
     // Update
-    Y = Z - H * X;
-    S = H * P * H.transpose() + R;
-    K = P * H.transpose() * S.inverse();
-    X = X  + K * Y;
-    P = (I-K * H) * P;
+    // Y = Z - H * X;
+    // S = H * P * H.transpose() + R;
+    // K = P * H.transpose() * S.inverse();
+    // X = X  + K * Y;
+    // P = (I-K * H) * P;
 
     calculations[0] = X(1,1);
 
