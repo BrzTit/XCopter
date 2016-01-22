@@ -37,7 +37,7 @@ void loop()
 	// printRawIMUValues();
 	// printTranslatedIMUValues();
 	// printFilteredIMUValues();
-	printCalculatedAngles();
+	// printCalculatedAngles();
 	// printControllerValues();
 	// printMotorWriteValues();
 

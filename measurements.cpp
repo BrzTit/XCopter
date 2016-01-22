@@ -14,7 +14,60 @@ float buffered_measurements[6][BUFFER_SIZE];
 float filtered_measurements[6];
 float calculations[2];
 
+float q1, q2, q3;
+float r1 = 0.1, r2 = 0.9;
+
+Eigen::MatrixXd X(3,1);
+Eigen::MatrixXd A(3,3);
+Eigen::MatrixXd Q(3,3);
+Eigen::MatrixXd P(3,3);
+Eigen::MatrixXd H(2,3);
+Eigen::MatrixXd R(2,2);
+Eigen::MatrixXd I(3,3);
+
+Eigen::MatrixXd Z(2,1);
+Eigen::MatrixXd Y(2,1);
+Eigen::MatrixXd S(2,2);
+Eigen::MatrixXd K(3,2);
+
 // ====================================================
+
+void initKalmanValues()
+{
+    // Initial orientation, rate, and bias
+    X(0,0) = 0; 
+    X(1,0) = 0; 
+    X(2,0) = 0;
+
+    // State transition matrix
+    A(0,0) = 1; A(0,1) = IMUPollPeriodSec; A(0,2) = -IMUPollPeriodSec;
+    A(1,0) = 0; A(1,1) = 1; A(1,2) = 0;
+    A(2,0) = 0; A(2,1) = 0; A(2,2) = 1;
+
+    // Process noise covariance matrix
+    Q(0,0) = q1; Q(0,1) = 0; Q(0,2) = 0;
+    Q(1,0) = 0; Q(1,1) = q2; Q(1,2) = 0;
+    Q(2,0) = 0; Q(2,1) = 0; Q(2,2) = q3;
+
+    // State Estimate
+    P(0,0) = 0; P(0,1) = 0; P(0,2) = 0;
+    P(1,0) = 0; P(1,1) = 0; P(1,2) = 0;
+    P(2,0) = 0; P(2,1) = 0; P(2,2) = 0;
+
+    // Measurement transition matrix
+    H(0,0) = 1; H(0,1) = 0; H(0,2) = 0;
+    H(1,0) = 0; H(1,1) = 1; H(1,2) = 0;
+
+    // Measurement noise covariance matrix
+    R(0,0) = r1; R(0,1) = 0;
+    R(1,0) = 0; R(1,1) = r2;
+
+    // Identity Matrix
+    I(0,0) = 1; I(0,1) = 0; I(0,2) = 0;
+    I(1,0) = 0; I(1,1) = 1; I(1,2) = 0;
+    I(2,0) = 0; I(2,1) = 0; I(2,2) = 1;
+
+}
 
 void updateIMUValues()
 {
@@ -78,25 +131,58 @@ void filterMeasurements()
         {counter = 0;}
 }
 
+void print_mtxf(const Eigen::MatrixXd& X)  
+{
+   int i, j, nrow, ncol;
+   
+   nrow = X.rows();
+   ncol = X.cols();
+
+   Serial.print("nrow: "); Serial.println(nrow);
+   Serial.print("ncol: "); Serial.println(ncol);       
+   Serial.println();
+   
+   for (i=0; i<nrow; i++)
+   {
+       for (j=0; j<ncol; j++)
+       {
+           Serial.print(X(i,j), 6);   // print 6 decimal places
+           Serial.print(", ");
+       }
+       Serial.println();
+   }
+   Serial.println();
+}
+
 void calcRollAngle()
 {
-    static float gyro_angle = 0, acc_angle = 0;
-
-    // Angle is rate * dt 
-    gyro_angle += filtered_measurements[4] * IMUPollPeriodSec;
-
-    // Constraining the angle to +- pi
-    gyro_angle = atan2(sin(gyro_angle * DEG_TO_RAD), cos(gyro_angle * DEG_TO_RAD)) * RAD_TO_DEG;
-
     // Z faces up and out of quad
     // X faces to the right of the quad
     // Y faces forward of the quad
 
     // Angle is given by geometry of gravity vector
     // acc_angle = atan2(-x, -z);
-    acc_angle = atan2(-filtered_measurements[0], -filtered_measurements[2]) * (180.0 / M_PI);
+    float acc_angle = atan2(-filtered_measurements[0], -filtered_measurements[2]) * (180.0 / M_PI);
+    Serial.println(acc_angle);
 
-    calculations[0] = GYRO_PERCENTAGE * gyro_angle + ACC_PERCENTAGE * acc_angle;
+    print_mtxf(X);
+    print_mtxf(A);
+
+    // Predict
+    X = A * X;
+    Serial.println("Here");
+    P = A * P * A.transpose() + Q;
+
+
+    // Update
+    Y = Z - H * X;
+    S = H * P * H.transpose() + R;
+    K = P * H.transpose() * S.inverse();
+    X = X  + K * Y;
+    P = (I-K * H) * P;
+
+    calculations[0] = X(1,1);
+
 }
 
 void calcPitchAngle()
@@ -122,6 +208,9 @@ void calcPitchAngle()
 
 void initializeIMU()
 {
+    Serial.println("Initializing kalman values...");
+    initKalmanValues();
+
     Serial.println("Setting IMU offsets to 0...");
     accelgyro.setXAccelOffset(0); 
     accelgyro.setYAccelOffset(0); 
