@@ -14,21 +14,21 @@ float buffered_measurements[6][BUFFER_SIZE];
 float filtered_measurements[6];
 float calculations[2];
 
-float q1, q2, q3;
-float r1 = 0.1, r2 = 0.9;
+float q1 = 0.01, q2 = 0.01, q3 = 0.001;
+float r1 = 0.035697, r2 = 0.013996;
 
-Eigen::MatrixXf X(3,1);
-Eigen::MatrixXf A(3,3);
-Eigen::MatrixXf Q(3,3);
-Eigen::MatrixXf P(3,3);
-Eigen::MatrixXf H(2,3);
-Eigen::MatrixXf R(2,2);
-Eigen::MatrixXf I(3,3);
+Eigen::Matrix<float, 3, 1> X;
+Eigen::Matrix3f A;
+Eigen::Matrix3f Q;
+Eigen::Matrix3f P;
+Eigen::Matrix<float, 2, 3> H;
+Eigen::Matrix2f R;
+Eigen::Matrix3f I;
 
-Eigen::MatrixXf Z(2,1);
-Eigen::MatrixXf Y(2,1);
-Eigen::MatrixXf S(2,2);
-Eigen::MatrixXf K(3,2);
+Eigen::Matrix<float, 2, 1> Z;
+Eigen::Matrix<float, 2, 1> Y;
+Eigen::Matrix2f S;
+Eigen::Matrix<float, 3, 2> K;
 
 // ====================================================
 
@@ -160,29 +160,34 @@ void calcRollAngle()
     // X faces to the right of the quad
     // Y faces forward of the quad
 
+
+
     // Angle is given by geometry of gravity vector
     // acc_angle = atan2(-x, -z);
     float acc_angle = atan2(-filtered_measurements[0], -filtered_measurements[2]) * (180.0 / M_PI);
-    Serial.println(acc_angle);
 
-    Eigen::Matrix2f tmp;
-    tmp << 1, 2, 3, 4;
+    // Serial.print(acc_angle);
+    // Serial.print(", ");
+    // Serial.print(filtered_measurements[4]);
+    // Serial.println(",");
 
-    print_mtxf(tmp * tmp);
+    // Update the measurements
+    Z(0,0) = acc_angle;
+    Z(1,0) = filtered_measurements[4];
 
     // Predict
-    // X = A*X;
-    // P = A * P * A.transpose() + Q;
-
+    X = A*X;
+    P = A * P * A.transpose() + Q;
 
     // Update
-    // Y = Z - H * X;
-    // S = H * P * H.transpose() + R;
-    // K = P * H.transpose() * S.inverse();
-    // X = X  + K * Y;
-    // P = (I-K * H) * P;
+    Y = Z - H * X;
+    S = H * P * H.transpose() + R;
+    K = P * H.transpose() * S.inverse();
+    X = X  + K * Y;
+    P = (I-K * H) * P;
 
-    calculations[0] = X(1,1);
+    calculations[0] = X(0,0);
+    Serial.println(calculations[0]);
 
 }
 
