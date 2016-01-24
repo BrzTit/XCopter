@@ -17,50 +17,73 @@ float calculations[2];
 float q1 = 0.01, q2 = 0.01, q3 = 0.001;
 float r1 = 0.035697, r2 = 0.013996;
 
-Eigen::Matrix<float, 3, 1> X;
-Eigen::Matrix3f A;
-Eigen::Matrix3f Q;
-Eigen::Matrix3f P;
-Eigen::Matrix<float, 2, 3> H;
-Eigen::Matrix2f R;
+Eigen::Matrix<float, 3, 1> X_roll, X_pitch; 
+Eigen::Matrix3f A_roll, A_pitch;
+Eigen::Matrix3f Q_roll, Q_pitch;
+Eigen::Matrix3f P_roll, P_pitch;
+Eigen::Matrix<float, 2, 3> H_roll, H_pitch;
+Eigen::Matrix2f R_roll, R_pitch;
 Eigen::Matrix3f I;
 
-Eigen::Matrix<float, 2, 1> Z;
-Eigen::Matrix<float, 2, 1> Y;
-Eigen::Matrix2f S;
-Eigen::Matrix<float, 3, 2> K;
+Eigen::Matrix<float, 2, 1> Z_roll, Z_pitch;
+Eigen::Matrix<float, 2, 1> Y_roll, Y_pitch;
+Eigen::Matrix2f S_roll, S_pitch;
+Eigen::Matrix<float, 3, 2> K_roll, K_pitch;
 
 // ====================================================
 
 void initKalmanValues()
 {
     // Initial orientation, rate, and bias
-    X(0,0) = 0; 
-    X(1,0) = 0; 
-    X(2,0) = 0;
+    X_roll(0,0) = 0;  
+    X_roll(1,0) = 0;  
+    X_roll(2,0) = 0; 
+
+    X_pitch(0,0) = 0;
+    X_pitch(1,0) = 0;
+    X_pitch(2,0) = 0;
 
     // State transition matrix
-    A(0,0) = 1; A(0,1) = IMUPollPeriodSec; A(0,2) = -IMUPollPeriodSec;
-    A(1,0) = 0; A(1,1) = 1; A(1,2) = 0;
-    A(2,0) = 0; A(2,1) = 0; A(2,2) = 1;
+    A_roll(0,0) = 1; A_roll(0,1) = IMUPollPeriodSec; A_roll(0,2) = -IMUPollPeriodSec; 
+    A_roll(1,0) = 0; A_roll(1,1) = 1; A_roll(1,2) = 0; 
+    A_roll(2,0) = 0; A_roll(2,1) = 0; A_roll(2,2) = 1; 
+
+    A_pitch(0,0) = 1; A_pitch(0,1) = IMUPollPeriodSec; A_pitch(0,2) = -IMUPollPeriodSec;
+    A_pitch(1,0) = 0; A_pitch(1,1) = 1; A_pitch(1,2) = 0;
+    A_pitch(2,0) = 0; A_pitch(2,1) = 0; A_pitch(2,2) = 1;
+
 
     // Process noise covariance matrix
-    Q(0,0) = q1; Q(0,1) = 0; Q(0,2) = 0;
-    Q(1,0) = 0; Q(1,1) = q2; Q(1,2) = 0;
-    Q(2,0) = 0; Q(2,1) = 0; Q(2,2) = q3;
+    Q_roll(0,0) = q1; Q_roll(0,1) = 0; Q_roll(0,2) = 0; 
+    Q_roll(1,0) = 0; Q_roll(1,1) = q2; Q_roll(1,2) = 0; 
+    Q_roll(2,0) = 0; Q_roll(2,1) = 0; Q_roll(2,2) = q3; 
+
+    Q_pitch(0,0) = q1; Q_pitch(0,1) = 0; Q_pitch(0,2) = 0;
+    Q_pitch(1,0) = 0; Q_pitch(1,1) = q2; Q_pitch(1,2) = 0;
+    Q_pitch(2,0) = 0; Q_pitch(2,1) = 0; Q_pitch(2,2) = q3;
 
     // State Estimate
-    P(0,0) = 0; P(0,1) = 0; P(0,2) = 0;
-    P(1,0) = 0; P(1,1) = 0; P(1,2) = 0;
-    P(2,0) = 0; P(2,1) = 0; P(2,2) = 0;
+    P_roll(0,0) = 0; P_roll(0,1) = 0; P_roll(0,2) = 0; 
+    P_roll(1,0) = 0; P_roll(1,1) = 0; P_roll(1,2) = 0; 
+    P_roll(2,0) = 0; P_roll(2,1) = 0; P_roll(2,2) = 0;
+
+    P_pitch(0,0) = 0; P_pitch(0,1) = 0; P_pitch(0,2) = 0;
+    P_pitch(1,0) = 0; P_pitch(1,1) = 0; P_pitch(1,2) = 0;
+    P_pitch(2,0) = 0; P_pitch(2,1) = 0; P_pitch(2,2) = 0;
 
     // Measurement transition matrix
-    H(0,0) = 1; H(0,1) = 0; H(0,2) = 0;
-    H(1,0) = 0; H(1,1) = 1; H(1,2) = 0;
+    H_roll(0,0) = 1; H_roll(0,1) = 0; H_roll(0,2) = 0;
+    H_roll(1,0) = 0; H_roll(1,1) = 1; H_roll(1,2) = 0;
+
+    H_pitch(0,0) = 1; H_pitch(0,1) = 0; H_pitch(0,2) = 0;
+    H_pitch(1,0) = 0; H_pitch(1,1) = 1; H_pitch(1,2) = 0;
 
     // Measurement noise covariance matrix
-    R(0,0) = r1; R(0,1) = 0;
-    R(1,0) = 0; R(1,1) = r2;
+    R_roll(0,0) = r1; R_roll(0,1) = 0;
+    R_roll(1,0) = 0; R_roll(1,1) = r2;
+
+    R_pitch(0,0) = r1; R_pitch(0,1) = 0;
+    R_pitch(1,0) = 0; R_pitch(1,1) = r2;
 
     // Identity Matrix
     I(0,0) = 1; I(0,1) = 0; I(0,2) = 0;
@@ -131,36 +154,11 @@ void filterMeasurements()
         {counter = 0;}
 }
 
-void print_mtxf(const Eigen::MatrixXf& X)  
-{
-   int i, j, nrow, ncol;
-   
-   nrow = X.rows();
-   ncol = X.cols();
-
-   Serial.print("nrow: "); Serial.println(nrow);
-   Serial.print("ncol: "); Serial.println(ncol);       
-   Serial.println();
-   
-   for (i=0; i<nrow; i++)
-   {
-       for (j=0; j<ncol; j++)
-       {
-           Serial.print(X(i,j), 6);   // print 6 decimal places
-           Serial.print(", ");
-       }
-       Serial.println();
-   }
-   Serial.println();
-}
-
 void calcRollAngle()
 {
     // Z faces up and out of quad
     // X faces to the right of the quad
     // Y faces forward of the quad
-
-
 
     // Angle is given by geometry of gravity vector
     // acc_angle = atan2(-x, -z);
@@ -172,44 +170,58 @@ void calcRollAngle()
     // Serial.println(",");
 
     // Update the measurements
-    Z(0,0) = acc_angle;
-    Z(1,0) = filtered_measurements[4];
+    Z_roll(0,0) = acc_angle;
+    Z_roll(1,0) = filtered_measurements[4];
 
     // Predict
-    X = A*X;
-    P = A * P * A.transpose() + Q;
+    X_roll = A_roll*X_roll;
+    P_roll = A_roll * P_roll * A_roll.transpose() + Q_roll;
 
     // Update
-    Y = Z - H * X;
-    S = H * P * H.transpose() + R;
-    K = P * H.transpose() * S.inverse();
-    X = X  + K * Y;
-    P = (I-K * H) * P;
+    Y_roll = Z_roll - H_roll * X_roll;
+    S_roll = H_roll * P_roll * H_roll.transpose() + R_roll;
+    K_roll = P_roll * H_roll.transpose() * S_roll.inverse();
+    X_roll = X_roll  + K_roll * Y_roll;
+    P_roll = (I-K_roll * H_roll) * P_roll;
 
-    calculations[0] = X(0,0);
-    Serial.println(calculations[0]);
+    calculations[0] = X_roll(0,0);
+    Serial.print(calculations[0]);
+    Serial.print("\t");
 
 }
 
 void calcPitchAngle()
 {
-    static float gyro_angle = 0, acc_angle = 0;
-
-    // Angle is rate * dt 
-    gyro_angle += filtered_measurements[3] * IMUPollPeriodSec;
-
-    // Constraining the angle to +- pi
-    gyro_angle = atan2(sin(gyro_angle * DEG_TO_RAD), cos(gyro_angle * DEG_TO_RAD)) * RAD_TO_DEG;
-
     // Z faces up and out of quad
     // X faces to the right of the quad
     // Y faces forward of the quad
 
     // Angle is given by geometry of gravity vector
-    // acc_angle = atan2(-y, -z);
-    acc_angle = atan2(-filtered_measurements[1], -filtered_measurements[2]) * (180.0 / M_PI);
+    // acc_angle = atan2(-x, -z);
+    float acc_angle = atan2(-filtered_measurements[1], -filtered_measurements[2]) * (180.0 / M_PI);
 
-    calculations[1] = GYRO_PERCENTAGE * gyro_angle + ACC_PERCENTAGE * acc_angle;
+    // Serial.print(acc_angle);
+    // Serial.print(", ");
+    // Serial.print(filtered_measurements[4]);
+    // Serial.println(",");
+
+    // Update the measurements
+    Z_pitch(0,0) = acc_angle;
+    Z_pitch(1,0) = filtered_measurements[3];
+
+    // Predict
+    X_pitch = A_pitch*X_pitch;
+    P_pitch = A_pitch * P_pitch * A_pitch.transpose() + Q_pitch;
+
+    // Update
+    Y_pitch = Z_pitch - H_pitch * X_pitch;
+    S_pitch = H_pitch * P_pitch * H_pitch.transpose() + R_pitch;
+    K_pitch = P_pitch * H_pitch.transpose() * S_pitch.inverse();
+    X_pitch = X_pitch  + K_pitch * Y_pitch;
+    P_pitch = (I-K_pitch * H_pitch) * P_pitch;
+
+    calculations[1] = X_pitch(0,0);
+    Serial.println(calculations[1]);
 }
 
 void initializeIMU()

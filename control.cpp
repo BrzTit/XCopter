@@ -63,7 +63,7 @@ void stabilize()
 
 void rollPID()
 {
-	float P = 10, I = 1, D = 0.1;
+	float P = 10, I = 1, D = 1;
 	static float error = 0, last_error = 0, total_error = 0;
 
 	error = desired_values[1] - calculations[0];
@@ -82,7 +82,7 @@ void rollPID()
 
 void pitchPID()
 {
-	float P = 10, I = 1, D = 0.1;
+	float P = 10, I = 1, D = 1;
 	static float error = 0, last_error = 0, total_error = 0;
 
 	error = desired_values[2] - calculations[1];
