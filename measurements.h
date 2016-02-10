@@ -12,8 +12,6 @@
 const float ACC_SENSITIVITY = 16384.0;
 const float GYRO_SENSITIVITY = 131.072;
 const int BUFFER_SIZE = 1;
-const float GYRO_PERCENTAGE = 0.98;
-const float ACC_PERCENTAGE = (1 - GYRO_PERCENTAGE);
 
 // Array containing the 6 measured values: ax, ay, az, gx, gy, gz
 extern float raw_measurements[6];

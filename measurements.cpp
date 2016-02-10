@@ -17,6 +17,9 @@ float calculations[2];
 float q1 = 0.01, q2 = 0.01, q3 = 0.001;
 float r1 = 0.035697, r2 = 0.013996;
 
+float q1_yaw = 0, q2_yaw = 0, q3_yaw = 0;
+float r1_yaw = 0, r2_yaw = 0;
+
 Eigen::Matrix<float, 3, 1> X_roll, X_pitch; 
 Eigen::Matrix3f A_roll, A_pitch;
 Eigen::Matrix3f Q_roll, Q_pitch;
@@ -43,6 +46,10 @@ void initKalmanValues()
     X_pitch(1,0) = 0;
     X_pitch(2,0) = 0;
 
+    X_yaw(0,0) = 0;
+    X_yaw(1,0) = 0;
+    X_yaw(2,0) = 0;
+
     // State transition matrix
     A_roll(0,0) = 1; A_roll(0,1) = IMUPollPeriodSec; A_roll(0,2) = -IMUPollPeriodSec; 
     A_roll(1,0) = 0; A_roll(1,1) = 1; A_roll(1,2) = 0; 
@@ -51,6 +58,10 @@ void initKalmanValues()
     A_pitch(0,0) = 1; A_pitch(0,1) = IMUPollPeriodSec; A_pitch(0,2) = -IMUPollPeriodSec;
     A_pitch(1,0) = 0; A_pitch(1,1) = 1; A_pitch(1,2) = 0;
     A_pitch(2,0) = 0; A_pitch(2,1) = 0; A_pitch(2,2) = 1;
+
+    A_yaw(0,0) = 1; A_yaw(0,1) = IMUPollPeriodSec; A_yaw(0,2) = -IMUPollPeriodSec;
+    A_yaw(1,0) = 0; A_yaw(1,1) = 1; A_yaw(1,2) = 0;
+    A_yaw(2,0) = 0; A_yaw(2,1) = 0; A_yaw(2,2) = 1;
 
 
     // Process noise covariance matrix
@@ -62,6 +73,10 @@ void initKalmanValues()
     Q_pitch(1,0) = 0; Q_pitch(1,1) = q2; Q_pitch(1,2) = 0;
     Q_pitch(2,0) = 0; Q_pitch(2,1) = 0; Q_pitch(2,2) = q3;
 
+    Q_yaw(0,0) = q1_yaw; Q_yaw(0,1) = 0; Q_yaw(0,2) = 0;
+    Q_yaw(1,0) = 0; Q_yaw(1,1) = q2_yaw; Q_yaw(1,2) = 0;
+    Q_yaw(2,0) = 0; Q_yaw(2,1) = 0; Q_yaw(2,2) = q3_yaw;
+
     // State Estimate
     P_roll(0,0) = 0; P_roll(0,1) = 0; P_roll(0,2) = 0; 
     P_roll(1,0) = 0; P_roll(1,1) = 0; P_roll(1,2) = 0; 
@@ -71,6 +86,10 @@ void initKalmanValues()
     P_pitch(1,0) = 0; P_pitch(1,1) = 0; P_pitch(1,2) = 0;
     P_pitch(2,0) = 0; P_pitch(2,1) = 0; P_pitch(2,2) = 0;
 
+    P_yaw(0,0) = 0; P_yaw(0,1) = 0; P_yaw(0,2) = 0;
+    P_yaw(1,0) = 0; P_yaw(1,1) = 0; P_yaw(1,2) = 0;
+    P_yaw(2,0) = 0; P_yaw(2,1) = 0; P_yaw(2,2) = 0;
+
     // Measurement transition matrix
     H_roll(0,0) = 1; H_roll(0,1) = 0; H_roll(0,2) = 0;
     H_roll(1,0) = 0; H_roll(1,1) = 1; H_roll(1,2) = 0;
@@ -78,12 +97,18 @@ void initKalmanValues()
     H_pitch(0,0) = 1; H_pitch(0,1) = 0; H_pitch(0,2) = 0;
     H_pitch(1,0) = 0; H_pitch(1,1) = 1; H_pitch(1,2) = 0;
 
+    H_yaw(0,0) = 1; H_yaw(0,1) = 0; H_yaw(0,2) = 0;
+    H_yaw(1,0) = 0; H_yaw(1,1) = 1; H_yaw(1,2) = 0;
+
     // Measurement noise covariance matrix
     R_roll(0,0) = r1; R_roll(0,1) = 0;
     R_roll(1,0) = 0; R_roll(1,1) = r2;
 
     R_pitch(0,0) = r1; R_pitch(0,1) = 0;
     R_pitch(1,0) = 0; R_pitch(1,1) = r2;
+
+    R_yaw(0,0) = r1_yaw; R_yaw(0,1) = 0;
+    R_yaw(1,0) = 0; R_yaw(1,1) = r2_yaw;
 
     // Identity Matrix
     I(0,0) = 1; I(0,1) = 0; I(0,2) = 0;

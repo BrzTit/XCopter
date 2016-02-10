@@ -11,10 +11,10 @@ void printMotorWriteValues()
 
 void printControllerValues()
 {
-	Serial.println("Throttle:  "); 	Serial.print(input[0]);
-	Serial.println("Rudder:    "); 	Serial.print(input[1]); 
-	Serial.println("Elevation: "); 	Serial.print(input[2]); 
-	Serial.println("Aile:      "); 	Serial.print(input[3]); 
+	Serial.print("Throttle:  ");  Serial.print(" \t"); 	Serial.print(input[0]);
+	Serial.print("Rudder:    ");  Serial.print(" \t"); 	Serial.print(input[1]); 
+	Serial.print("Elevation: ");  Serial.print(" \t"); 	Serial.print(input[2]); 
+	Serial.print("Aile:      ");  Serial.print(" \t"); 	Serial.println(input[3]); 
 }
 
 void printRawIMUValues()
