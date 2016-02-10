@@ -15,7 +15,7 @@ void setup()
 	// 	checkArmed();					// Test whether controller is armed
 	// }
 
-	initializeIMU();					// Initialize and calibrate the IMU
+	initializeSensors();					// Initialize and calibrate the IMU
 	timer = millis();
 
 }
@@ -29,9 +29,10 @@ void loop()
 	}
 	timer = millis();
 
-	updateIMUValues();
-	calcRollAngle();
-    calcPitchAngle();
+	updateSensors();
+	// calcRollAngle();
+    // calcPitchAngle();
+    // calcYawAngle();
 	// updateControllerValues();
 
 	// printRawIMUValues();

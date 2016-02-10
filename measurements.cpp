@@ -4,34 +4,40 @@
 // DATA DECLARATIONS
 // ===================================================
 MPU6050 accelgyro;
+MS5611 barometer;
 
 // Offset values
 int16_t gx_off = 0, gy_off = 0, gz_off = 0, ax_off = 0, ay_off = 0, az_off = 0;
 
-float raw_measurements[6];
-float translated_measurements[6];
-float buffered_measurements[6][BUFFER_SIZE];
-float filtered_measurements[6];
+// Measurement buffers
+float raw_measurements[NUM_MEASUREMENTS];
+float translated_measurements[NUM_MEASUREMENTS];
+float buffered_measurements[NUM_MEASUREMENTS][BUFFER_SIZE];
+float filtered_measurements[NUM_MEASUREMENTS];
 float calculations[2];
 
+float referencePressure = 0;
+
+// Kalman filter constants
 float q1 = 0.01, q2 = 0.01, q3 = 0.001;
 float r1 = 0.035697, r2 = 0.013996;
 
 float q1_yaw = 0, q2_yaw = 0, q3_yaw = 0;
 float r1_yaw = 0, r2_yaw = 0;
 
-Eigen::Matrix<float, 3, 1> X_roll, X_pitch; 
-Eigen::Matrix3f A_roll, A_pitch;
-Eigen::Matrix3f Q_roll, Q_pitch;
-Eigen::Matrix3f P_roll, P_pitch;
-Eigen::Matrix<float, 2, 3> H_roll, H_pitch;
-Eigen::Matrix2f R_roll, R_pitch;
+// Kalman filter matrices
+Eigen::Matrix<float, 3, 1> X_roll, X_pitch, X_yaw; 
+Eigen::Matrix3f A_roll, A_pitch, A_yaw;
+Eigen::Matrix3f Q_roll, Q_pitch, Q_yaw;
+Eigen::Matrix3f P_roll, P_pitch, P_yaw;
+Eigen::Matrix<float, 2, 3> H_roll, H_pitch, H_yaw;
+Eigen::Matrix2f R_roll, R_pitch, R_yaw;
 Eigen::Matrix3f I;
 
-Eigen::Matrix<float, 2, 1> Z_roll, Z_pitch;
-Eigen::Matrix<float, 2, 1> Y_roll, Y_pitch;
-Eigen::Matrix2f S_roll, S_pitch;
-Eigen::Matrix<float, 3, 2> K_roll, K_pitch;
+Eigen::Matrix<float, 2, 1> Z_roll, Z_pitch, Z_yaw;
+Eigen::Matrix<float, 2, 1> Y_roll, Y_pitch, Y_yaw;
+Eigen::Matrix2f S_roll, S_pitch, S_yaw;
+Eigen::Matrix<float, 3, 2> K_roll, K_pitch, K_yaw;
 
 // ====================================================
 
@@ -117,68 +123,6 @@ void initKalmanValues()
 
 }
 
-void updateIMUValues()
-{
-
-    int16_t ax, ay, az, gx, gy, gz;
-
-	// read raw accel/gyro raw_measurements from device
-    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-
-    raw_measurements[0] = ((float)ax);
-    raw_measurements[1] = ((float)ay);
-    raw_measurements[2] = ((float)az);
-
-    raw_measurements[3] = ((float)gx);
-    raw_measurements[4] = ((float)gy);
-    raw_measurements[5] = ((float)gz);
-
-    // Translate into terms of g.
-    for(int i = 0; i < 3; i++)
-    {
-        translated_measurements[i] = raw_measurements[i] / ACC_SENSITIVITY;
-    }
-
-    // Invert the Z axis
-    translated_measurements[2] = -translated_measurements[2];
-
-    // Translate into terms of degrees/s
-    for(int i = 3; i < 6; i++)
-    {
-        translated_measurements[i] = raw_measurements[i] / GYRO_SENSITIVITY;
-    }
-    filterMeasurements();
-}
-
-// Moving average filter for both gyro and accelerometer
-void filterMeasurements()
-{
-    // Circular buffer counter
-    static int counter = 0;
-
-    // Move all the raw measurements into the circular buffer
-    for(int i = 0; i < 6; i++)
-    {
-        buffered_measurements[i][counter] = translated_measurements[i];
-    }
-
-    // Average the measurements in the buffer and stick them into the filtered measurement array
-    float avg[6] = {0, 0, 0, 0, 0, 0};
-    for(int p = 0; p < 6; p++)
-    {
-        for(int i = 0; i < BUFFER_SIZE; i++)
-        {
-            avg[p] += buffered_measurements[p][i];
-        }
-        filtered_measurements[p] = avg[p] / (float)BUFFER_SIZE;
-    }
-
-    // Incrememnt and roll over the circular buffer counter
-    counter += 1;
-    if(counter == BUFFER_SIZE)
-        {counter = 0;}
-}
-
 void calcRollAngle()
 {
     // Z faces up and out of quad
@@ -225,11 +169,6 @@ void calcPitchAngle()
     // acc_angle = atan2(-x, -z);
     float acc_angle = atan2(-filtered_measurements[1], -filtered_measurements[2]) * (180.0 / M_PI);
 
-    // Serial.print(acc_angle);
-    // Serial.print(", ");
-    // Serial.print(filtered_measurements[4]);
-    // Serial.println(",");
-
     // Update the measurements
     Z_pitch(0,0) = acc_angle;
     Z_pitch(1,0) = filtered_measurements[3];
@@ -247,6 +186,20 @@ void calcPitchAngle()
 
     calculations[1] = X_pitch(0,0);
     Serial.println(calculations[1]);
+}
+
+void calcYawAngle()
+{
+    // Z faces up and out of quad
+    // X faces to the right of the quad
+    // Y faces forward of the quad
+}
+
+
+void initializeSensors()
+{
+    initializeIMU();
+    initializeBarometer();
 }
 
 void initializeIMU()
@@ -274,8 +227,107 @@ void initializeIMU()
     Serial.println("Calibrating the IMU...");
     while(calibrateIMU() == false);
     Serial.println("Finished calibration.");
-        delay(5000);
-    
+}
+
+void initializeBarometer()
+{
+    Serial.println("Initialized the barometer...");
+    while(!barometer.begin())
+    {
+        Serial.println("Could not find a valid MS5611 sensor, check wiring!");
+        delay(100);
+    }
+
+    // Get reference pressure for relative altitude
+    referencePressure = barometer.readPressure(true);
+
+    Serial.println("Initialized.");
+}
+
+void updateSensors()
+{
+    updateIMUValues();
+    updateBarometerValues();
+    filterMeasurements();
+}
+
+void updateIMUValues()
+{
+
+    int16_t ax, ay, az, gx, gy, gz;
+
+	// read raw accel/gyro raw_measurements from device
+    accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+
+    raw_measurements[0] = ((float)ax);
+    raw_measurements[1] = ((float)ay);
+    raw_measurements[2] = ((float)az);
+
+    raw_measurements[3] = ((float)gx);
+    raw_measurements[4] = ((float)gy);
+    raw_measurements[5] = ((float)gz);
+
+    // Translate into terms of g.
+    for(int i = 0; i < 3; i++)
+    {
+        translated_measurements[i] = raw_measurements[i] / ACC_SENSITIVITY;
+    }
+
+    // Invert the Z axis
+    translated_measurements[2] = -translated_measurements[2];
+
+    // Translate into terms of degrees/s
+    for(int i = 3; i < 6; i++)
+    {
+        translated_measurements[i] = raw_measurements[i] / GYRO_SENSITIVITY;
+    }
+
+}
+
+void updateBarometerValues()
+{
+    // Read true temperature & Pressure
+    double realTemperature = barometer.readTemperature(true);
+    long realPressure = barometer.readPressure(true);
+
+    // Calculate altitude
+    float absoluteAltitude = barometer.getAltitude(realPressure);
+    float relativeAltitude = barometer.getAltitude(realPressure, referencePressure);
+
+    // Serial.print(realTemperature); Serial.print("\t"); Serial.print(realPressure); Serial.print("\t");
+    // Serial.print(absoluteAltitude); Serial.print("\t"); Serial.print(relativeAltitude); Serial.println();
+
+    raw_measurements[7] = relativeAltitude;
+    translated_measurements[7] = relativeAltitude;
+}
+
+// Moving average filter for both gyro and accelerometer
+void filterMeasurements()
+{
+    // Circular buffer counter
+    static int counter = 0;
+
+    // Move all the raw measurements into the circular buffer
+    for(int i = 0; i < NUM_MEASUREMENTS; i++)
+    {
+        buffered_measurements[i][counter] = translated_measurements[i];
+    }
+
+    // Average the measurements in the buffer and stick them into the filtered measurement array
+    float avg[NUM_MEASUREMENTS] = {0, 0, 0, 0, 0, 0, 0};
+    for(int p = 0; p < NUM_MEASUREMENTS; p++)
+    {
+        for(int i = 0; i < BUFFER_SIZE; i++)
+        {
+            avg[p] += buffered_measurements[p][i];
+        }
+        filtered_measurements[p] = avg[p] / (float)BUFFER_SIZE;
+    }
+
+    // Incrememnt and roll over the circular buffer counter
+    counter += 1;
+    if(counter == BUFFER_SIZE)
+        {counter = 0;}
 }
 
 // Takes an average of 100 readings from the IMU and averages them to get the offset.
