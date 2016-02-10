@@ -5,6 +5,7 @@
 // ===================================================
 MPU6050 accelgyro;
 MS5611 barometer;
+HMC5883L compass;
 
 // Offset values
 int16_t gx_off = 0, gy_off = 0, gz_off = 0, ax_off = 0, ay_off = 0, az_off = 0;

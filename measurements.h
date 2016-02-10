@@ -9,6 +9,7 @@
 #include <Eigen/LU>
 #include <MS5611.h>
 #include <Wire.h>
+#include <HMC5883L.h>
 
 
 const float ACC_SENSITIVITY = 16384.0;
