@@ -17,14 +17,14 @@ const float GYRO_SENSITIVITY = 131.072;
 const int BUFFER_SIZE = 1;
 const int NUM_MEASUREMENTS = 7;
 
-// Array containing the 6 measured values: ax, ay, az, gx, gy, gz
+// Array containing the measured values: ax, ay, az, gx, gy, gz, barometer
 extern float raw_measurements[NUM_MEASUREMENTS];
 extern float translated_measurements[NUM_MEASUREMENTS];
 extern float buffered_measurements[NUM_MEASUREMENTS][BUFFER_SIZE];
 extern float filtered_measurements[NUM_MEASUREMENTS];
 
 // Array containing the 2 calculated values: roll_angle, pitch_angle
-extern float calculations[2];
+extern float calculations[3];
 
 
 void calcRollAngle();
@@ -37,9 +37,11 @@ void initKalmanValues();
 void initializeSensors();
 void initializeIMU();
 void initializeBarometer();
+void initializeCompass();
 
 void updateSensors();
 void updateIMUValues();
 void updateBarometerValues();
+void updateCompassValues();
 
 bool calibrateIMU();

@@ -15,7 +15,7 @@ float raw_measurements[NUM_MEASUREMENTS];
 float translated_measurements[NUM_MEASUREMENTS];
 float buffered_measurements[NUM_MEASUREMENTS][BUFFER_SIZE];
 float filtered_measurements[NUM_MEASUREMENTS];
-float calculations[2];
+float calculations[3];
 
 float referencePressure = 0;
 
@@ -23,7 +23,7 @@ float referencePressure = 0;
 float q1 = 0.01, q2 = 0.01, q3 = 0.001;
 float r1 = 0.035697, r2 = 0.013996;
 
-float q1_yaw = 0, q2_yaw = 0, q3_yaw = 0;
+float q1_yaw = 0.01, q2_yaw = 0.01, q3_yaw = 0.001;
 float r1_yaw = 0, r2_yaw = 0;
 
 // Kalman filter matrices
@@ -31,14 +31,20 @@ Eigen::Matrix<float, 3, 1> X_roll, X_pitch, X_yaw;
 Eigen::Matrix3f A_roll, A_pitch, A_yaw;
 Eigen::Matrix3f Q_roll, Q_pitch, Q_yaw;
 Eigen::Matrix3f P_roll, P_pitch, P_yaw;
-Eigen::Matrix<float, 2, 3> H_roll, H_pitch, H_yaw;
-Eigen::Matrix2f R_roll, R_pitch, R_yaw;
+Eigen::Matrix<float, 2, 3> H_roll, H_pitch; 
+Eigen::Matrix<float, 1, 3> H_yaw;
+Eigen::Matrix2f R_roll, R_pitch; 
+Eigen::Matrix<float, 1, 1> R_yaw;
 Eigen::Matrix3f I;
 
-Eigen::Matrix<float, 2, 1> Z_roll, Z_pitch, Z_yaw;
-Eigen::Matrix<float, 2, 1> Y_roll, Y_pitch, Y_yaw;
-Eigen::Matrix2f S_roll, S_pitch, S_yaw;
-Eigen::Matrix<float, 3, 2> K_roll, K_pitch, K_yaw;
+Eigen::Matrix<float, 2, 1> Z_roll, Z_pitch;
+Eigen::Matrix<float, 1, 1> Z_yaw;
+Eigen::Matrix<float, 2, 1> Y_roll, Y_pitch;
+Eigen::Matrix<float, 1, 1> Y_yaw;
+Eigen::Matrix2f S_roll, S_pitch;
+Eigen::Matrix<float, 1, 1> S_yaw;
+Eigen::Matrix<float, 3, 2> K_roll, K_pitch;
+Eigen::Matrix<float, 3, 1> K_yaw;
 
 // ====================================================
 
@@ -104,8 +110,7 @@ void initKalmanValues()
     H_pitch(0,0) = 1; H_pitch(0,1) = 0; H_pitch(0,2) = 0;
     H_pitch(1,0) = 0; H_pitch(1,1) = 1; H_pitch(1,2) = 0;
 
-    H_yaw(0,0) = 1; H_yaw(0,1) = 0; H_yaw(0,2) = 0;
-    H_yaw(1,0) = 0; H_yaw(1,1) = 1; H_yaw(1,2) = 0;
+    H_yaw(0,0) = 0; H_yaw(0,1) = 1; H_yaw(0,2) = 0;
 
     // Measurement noise covariance matrix
     R_roll(0,0) = r1; R_roll(0,1) = 0;
@@ -114,8 +119,9 @@ void initKalmanValues()
     R_pitch(0,0) = r1; R_pitch(0,1) = 0;
     R_pitch(1,0) = 0; R_pitch(1,1) = r2;
 
-    R_yaw(0,0) = r1_yaw; R_yaw(0,1) = 0;
-    R_yaw(1,0) = 0; R_yaw(1,1) = r2_yaw;
+    R_yaw(0,0) = r2;
+    // R_yaw(0,0) = r1_yaw; R_yaw(0,1) = 0;
+    // R_yaw(1,0) = 0; R_yaw(1,1) = r2_yaw;
 
     // Identity Matrix
     I(0,0) = 1; I(0,1) = 0; I(0,2) = 0;
@@ -194,6 +200,21 @@ void calcYawAngle()
     // Z faces up and out of quad
     // X faces to the right of the quad
     // Y faces forward of the quad
+    Z_yaw(0,0) = filtered_measurements[5];
+
+    // Predict
+    X_yaw = A_yaw*X_yaw;
+    P_yaw = A_yaw * P_yaw * A_yaw.transpose() + Q_yaw;
+
+    // Update
+    Y_yaw = Z_yaw - H_yaw * X_yaw;
+    S_yaw = H_yaw * P_yaw * H_yaw.transpose() + R_yaw;
+    K_yaw = P_yaw * H_yaw.transpose() * S_yaw.inverse();
+    X_yaw = X_yaw  + K_yaw * Y_yaw;
+    P_yaw = (I-K_yaw * H_yaw) * P_yaw;
+
+    calculations[2] = X_yaw(0,0);
+    Serial.println(calculations[2]);
 }
 
 
@@ -201,6 +222,7 @@ void initializeSensors()
 {
     initializeIMU();
     initializeBarometer();
+    initializeCompass();
 }
 
 void initializeIMU()
@@ -245,10 +267,59 @@ void initializeBarometer()
     Serial.println("Initialized.");
 }
 
+void initializeCompass()
+{
+
+    // Initialize HMC5883L
+    Serial.println("Initialize HMC5883L");
+    while (!compass.begin())
+    {
+        Serial.println("Could not find a valid HMC5883L sensor, check wiring!");
+        delay(100);
+    }
+
+    // Set measurement range
+    // +/- 0.88 Ga: HMC5883L_RANGE_0_88GA
+    // +/- 1.30 Ga: HMC5883L_RANGE_1_3GA (default)
+    // +/- 1.90 Ga: HMC5883L_RANGE_1_9GA
+    // +/- 2.50 Ga: HMC5883L_RANGE_2_5GA
+    // +/- 4.00 Ga: HMC5883L_RANGE_4GA
+    // +/- 4.70 Ga: HMC5883L_RANGE_4_7GA
+    // +/- 5.60 Ga: HMC5883L_RANGE_5_6GA
+    // +/- 8.10 Ga: HMC5883L_RANGE_8_1GA
+    compass.setRange(HMC5883L_RANGE_1_3GA);
+
+    // Set measurement mode
+    // Idle mode:              HMC5883L_IDLE
+    // Single-Measurement:     HMC5883L_SINGLE
+    // Continuous-Measurement: HMC5883L_CONTINOUS (default)
+    compass.setMeasurementMode(HMC5883L_CONTINOUS);
+
+    // Set data rate
+    //  0.75Hz: HMC5883L_DATARATE_0_75HZ
+    //  1.50Hz: HMC5883L_DATARATE_1_5HZ
+    //  3.00Hz: HMC5883L_DATARATE_3HZ
+    //  7.50Hz: HMC5883L_DATARATE_7_50HZ
+    // 15.00Hz: HMC5883L_DATARATE_15HZ (default)
+    // 30.00Hz: HMC5883L_DATARATE_30HZ
+    // 75.00Hz: HMC5883L_DATARATE_75HZ
+    compass.setDataRate(HMC5883L_DATARATE_15HZ);
+
+    // Set number of samples averaged
+    // 1 sample:  HMC5883L_SAMPLES_1 (default)
+    // 2 samples: HMC5883L_SAMPLES_2
+    // 4 samples: HMC5883L_SAMPLES_4
+    // 8 samples: HMC5883L_SAMPLES_8
+    compass.setSamples(HMC5883L_SAMPLES_1);
+    Serial.println("Initialized.");
+
+}
+
 void updateSensors()
 {
     updateIMUValues();
     updateBarometerValues();
+    updateCompassValues();
     filterMeasurements();
 }
 
@@ -295,11 +366,30 @@ void updateBarometerValues()
     float absoluteAltitude = barometer.getAltitude(realPressure);
     float relativeAltitude = barometer.getAltitude(realPressure, referencePressure);
 
-    // Serial.print(realTemperature); Serial.print("\t"); Serial.print(realPressure); Serial.print("\t");
-    // Serial.print(absoluteAltitude); Serial.print("\t"); Serial.print(relativeAltitude); Serial.println();
-
     raw_measurements[7] = relativeAltitude;
     translated_measurements[7] = relativeAltitude;
+}
+
+void updateCompassValues()
+{
+    Vector raw = compass.readRaw();
+    Vector norm = compass.readNormalize();
+
+    Serial.print(" Xraw = ");
+    Serial.print(raw.XAxis);
+    Serial.print(" Yraw = ");
+    Serial.print(raw.YAxis);
+    Serial.print(" Zraw = ");
+    Serial.print(raw.ZAxis);
+    Serial.print(" Xnorm = ");
+    Serial.print(norm.XAxis);
+    Serial.print(" Ynorm = ");
+    Serial.print(norm.YAxis);
+    Serial.print(" ZNorm = ");
+    Serial.print(norm.ZAxis);
+    Serial.println();  
+
+    delay(100);
 }
 
 // Moving average filter for both gyro and accelerometer
